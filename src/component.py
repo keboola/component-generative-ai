@@ -60,6 +60,7 @@ class Component(ComponentBase):
         self.model = None
         self._configuration = None
         self.failed_requests = 0
+        self.tokens_used = 0
 
     def run(self):
         """
@@ -81,7 +82,8 @@ class Component(ComponentBase):
                     prompt = self._build_prompt(self.input_keys, row)
 
                     try:
-                        result = client.infer(prompt, **self.model_options)
+                        result, token_usage = client.infer(prompt, **self.model_options)
+                        self.tokens_used += token_usage
                     except AIClientException as e:
                         raise UserException(e) from e
 
@@ -100,7 +102,7 @@ class Component(ComponentBase):
                     self.add_flag_to_manifest()
                 raise UserException(f"Component has failed to process {self.failed_requests} records.")
         else:
-            logging.info("All rows processed.")
+            logging.info(f"All rows processed, total token usage = {self.tokens_used}")
 
     def init_configuration(self):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
@@ -222,7 +224,8 @@ class Component(ComponentBase):
 
         client = self.get_client()
 
-        table_preview = self._get_table_preview()
+        table_id = self._get_storage_source()
+        table_preview = self._get_table_preview(table_id)
 
         destination_config = self.configuration.parameters['destination']
         primary_key = destination_config.get('primary_keys_array', [])
@@ -230,13 +233,16 @@ class Component(ComponentBase):
         results = []
         for row in table_preview:
             prompt = self._build_prompt(self.input_keys, row)
-            result = client.infer(prompt, **self.model_options)
+            result, token_usage = client.infer(prompt, **self.model_options)
+            self.tokens_used += token_usage
 
             if result:
                 results.append(self._build_output_row(primary_key, row, result))
 
         if results:
             markdown = self.create_markdown_table(results)
+            tokens_used_info = f"\nTokens used: {self.tokens_used}"
+            markdown += tokens_used_info
             return ValidationResult(markdown, MessageType.SUCCESS)
         else:
             return ValidationResult("Query returned no data.", MessageType.WARNING)
@@ -253,8 +259,7 @@ class Component(ComponentBase):
             table += "| " + " | ".join(row_values) + " |\n"
         return table
 
-    def _get_table_preview(self) -> list[dict]:
-        table_id = self._get_storage_source()
+    def _get_table_preview(self, table_id: str) -> list[dict]:
         tables = Tables(self._get_kbc_root_url(), self._get_storage_token())
         preview = tables.preview(table_id)
 
