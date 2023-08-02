@@ -9,13 +9,16 @@ import time
 from typing import List
 import json
 import os
+from io import StringIO
+
 
 import pystache as pystache
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.sync_actions import ValidationResult, MessageType
 from keboola.component.dao import TableDefinition
 from keboola.component.exceptions import UserException
-from kbcstorage.client import Client as kbcs_client
+from kbcstorage.tables import Tables
+
 
 from configuration import Configuration
 from client.AIClient import OpenAIClient, AIClientException
@@ -64,8 +67,7 @@ class Component(ComponentBase):
         """
         self.init_configuration()
 
-        # self.fetch_table()
-        logging.info(self.environment_variables.stack_id)
+        self.test_query()
         exit()
 
         client = self.get_client()
@@ -218,27 +220,24 @@ class Component(ComponentBase):
 
         client = self.get_client()
 
-        input_table, out_table = self.prepare_tables()
+        table_preview = self._get_table_preview()
+
+        destination_config = self.configuration.parameters['destination']
+        primary_key = destination_config.get('primary_keys_array', [])
 
         results = []
-        with open(input_table.full_path, 'r') as input_file:
-            reader = csv.DictReader(input_file)
+        for row in table_preview:
+            prompt = self._build_prompt(self.input_keys, row)
+            result = client.infer(prompt, **self.model_options)
 
-            row_count = 0
-            for row in reader:
-                prompt = self._build_prompt(self.input_keys, row)
-                result = client.infer(prompt, **self.model_options)
+            if result:
+                results.append(self._build_output_row(primary_key, row, result))
 
-                if result:
-                    results.append(self._build_output_row(out_table.primary_key, row, result))
-                time.sleep(self.sleep_time)
-
-                row_count += 1
-                if row_count == 3:
-                    break  # Stop processing after three rows
-
-        markdown = self.create_markdown_table(results)
-        return ValidationResult(markdown, MessageType.SUCCESS)
+        if results:
+            markdown = self.create_markdown_table(results)
+            return ValidationResult(markdown, MessageType.SUCCESS)
+        else:
+            return ValidationResult("Query returned no data.", MessageType.WARNING)
 
     @staticmethod
     def create_markdown_table(data):
@@ -252,14 +251,21 @@ class Component(ComponentBase):
             table += "| " + " | ".join(row_values) + " |\n"
         return table
 
-    def fetch_table(self):
-        """Used for sync actions"""
+    def _get_table_preview(self) -> list[dict]:
+        table_id = self._get_storage_source()
+        tables = Tables(self._get_kbc_root_url(), self._get_storage_token())
+        preview = tables.preview(table_id)
 
-        sapi_client = kbcs_client(self._get_kbc_root_url(), self._get_storage_token())
-        sapi_client.tables.detail(self._get_storage_source())
+        data = []
+        csv_reader = csv.DictReader(StringIO(preview))
+        for row in csv_reader:
+            data.append(row)
+
+        return data
 
     def _get_kbc_root_url(self) -> str:
-        return f'https://{self.environment_variables.stack_id}'
+        return f'https://{self.environment_variables.stack_id}' if self.environment_variables.stack_id \
+            else "https://connection.keboola.com"
 
     def _get_storage_source(self) -> str:
         storage_config = self.configuration.config_data.get("storage")
