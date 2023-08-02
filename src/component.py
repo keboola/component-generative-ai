@@ -15,6 +15,7 @@ from keboola.component.base import ComponentBase, sync_action
 from keboola.component.sync_actions import ValidationResult, MessageType
 from keboola.component.dao import TableDefinition
 from keboola.component.exceptions import UserException
+from kbcstorage.client import Client as kbcs_client
 
 from configuration import Configuration
 from client.AIClient import OpenAIClient, AIClientException
@@ -62,6 +63,10 @@ class Component(ComponentBase):
         Main execution code
         """
         self.init_configuration()
+
+        # self.fetch_table()
+        logging.info(self.environment_variables.stack_id)
+        exit()
 
         client = self.get_client()
 
@@ -246,6 +251,23 @@ class Component(ComponentBase):
             row_values = [str(row[header]) for header in headers]
             table += "| " + " | ".join(row_values) + " |\n"
         return table
+
+    def fetch_table(self):
+        """Used for sync actions"""
+
+        sapi_client = kbcs_client(self._get_kbc_root_url(), self._get_storage_token())
+        sapi_client.tables.detail(self._get_storage_source())
+
+    def _get_kbc_root_url(self) -> str:
+        return f'https://{self.environment_variables.stack_id}'
+
+    def _get_storage_source(self) -> str:
+        storage_config = self.configuration.config_data.get("storage")
+        source = storage_config["input"]["tables"][0]["source"]
+        return source
+
+    def _get_storage_token(self) -> str:
+        return self.configuration.parameters.get('#storage_token') or self.environment_variables.token
 
 
 """
