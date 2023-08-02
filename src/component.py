@@ -153,7 +153,11 @@ class Component(ComponentBase):
 
     def _build_out_table(self) -> TableDefinition:
         destination_config = self.configuration.parameters['destination']
-        out_table_name = f"{destination_config['output_table_name']}.csv"
+
+        if not (out_table_name := destination_config.get("output_table_name")):
+            out_table_name = f"{self.environment_variables.component_id}_{self.environment_variables.config_row_id}.csv"
+        else:
+            out_table_name = f"{out_table_name}.csv"
 
         # backward compatibility with the old string element
         if destination_config.get('primary_keys', None):
