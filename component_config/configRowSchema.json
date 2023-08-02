@@ -128,7 +128,7 @@
       "title": "Maximum token spend (Optional)",
       "description": "If set to value greater than 0, the component will stop processing rows after reaching the limit of allowed tokens.",
       "default": 0,
-      "type": "int",
+      "type": "integer",
       "propertyOrder": 40
     },
     "destination": {
