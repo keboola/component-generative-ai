@@ -1,5 +1,9 @@
 import backoff
+import logging
 import openai
+from typing import Optional
+
+
 from .Factory import CommonClient
 
 OPENAI_MODELS = ["gpt-4", "gpt-4-0314", "gpt-4-32k", "gpt-4-32k-0314", "gpt-3.5-turbo", "gpt-3.5-turbo-0301"]
@@ -28,7 +32,7 @@ class OpenAIClient(CommonClient):
     @backoff.on_exception(backoff.expo,
                           (openai.error.RateLimitError, openai.error.APIError, openai.error.ServiceUnavailableError),
                           max_tries=3, on_giveup=on_giveup)
-    def get_completion_result(self, model, prompt, **model_options):
+    def get_completion_result(self, model: str, prompt: str, **model_options) -> Optional[str]:
         try:
             response = openai.Completion.create(
                 model=model,
@@ -36,7 +40,8 @@ class OpenAIClient(CommonClient):
                 **model_options
             )
         except openai.error.InvalidRequestError as e:
-            raise AIClientException(f"Invalid Request Error: {e}")
+            logging.error(f"Invalid Request Error: {e}")
+            return None
         except openai.error.AuthenticationError as e:
             raise AIClientException("Your OpenAI API key is invalid") from e
         except openai.error.APIConnectionError as e:
@@ -47,7 +52,7 @@ class OpenAIClient(CommonClient):
     @backoff.on_exception(backoff.expo,
                           (openai.error.RateLimitError, openai.error.APIError, openai.error.ServiceUnavailableError),
                           max_tries=3, on_giveup=on_giveup)
-    def get_chat_completion_result(self, model, prompt, **model_options):
+    def get_chat_completion_result(self, model: str, prompt: str, **model_options) -> Optional[str]:
         try:
             response = openai.ChatCompletion.create(
                 model=model,
@@ -55,7 +60,8 @@ class OpenAIClient(CommonClient):
                 **model_options
             )
         except openai.error.InvalidRequestError as e:
-            raise AIClientException(f"Invalid Request Error: {e}")
+            logging.error(f"Invalid Request Error: {e}")
+            return None
         except openai.error.AuthenticationError as e:
             raise AIClientException("Your OpenAI API key is invalid") from e
         except openai.error.APIConnectionError as e:

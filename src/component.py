@@ -76,10 +76,17 @@ class Component(ComponentBase):
                 writer.writeheader()
                 for row in reader:
                     prompt = self._build_prompt(self.input_keys, row)
-                    result = client.infer(prompt, **self.model_options)
+
+                    try:
+                        result = client.infer(prompt, **self.model_options)
+                    except AIClientException as e:
+                        raise UserException(e) from e
 
                     if result:
                         writer.writerow(self._build_output_row(out_table.primary_key, row, result))
+                    else:
+                        self.failed_requests += 1
+
                     time.sleep(self.sleep_time)
 
         self.write_manifest(out_table)
