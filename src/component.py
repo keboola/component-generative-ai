@@ -10,6 +10,7 @@ from typing import List
 import json
 import os
 from io import StringIO
+from itertools import islice
 
 
 import pystache as pystache
@@ -225,7 +226,7 @@ class Component(ComponentBase):
         client = self.get_client()
 
         table_id = self._get_storage_source()
-        table_preview = self._get_table_preview(table_id)
+        table_preview = self._get_table_preview(table_id, limit=10)
 
         preview_size = len(table_preview)
         table_size = self._get_table_size(table_id)
@@ -243,7 +244,6 @@ class Component(ComponentBase):
                 results.append(self._build_output_row(primary_key, row, result))
 
         if results:
-
             estimated_token_usage = self.estimate_token_usage(preview_size, table_size)
 
             markdown = self.create_markdown_table(results)
@@ -273,14 +273,19 @@ class Component(ComponentBase):
             table += "| " + " | ".join(row_values) + " |\n"
         return table
 
-    def _get_table_preview(self, table_id: str) -> list[dict]:
+    def _get_table_preview(self, table_id: str, limit: int = None) -> list[dict]:
         tables = Tables(self._get_kbc_root_url(), self._get_storage_token())
         preview = tables.preview(table_id)
 
         data = []
         csv_reader = csv.DictReader(StringIO(preview))
-        for row in csv_reader:
-            data.append(row)
+
+        if limit is None:
+            for row in csv_reader:
+                data.append(row)
+        else:
+            for row in islice(csv_reader, limit):
+                data.append(row)
 
         return data
 
