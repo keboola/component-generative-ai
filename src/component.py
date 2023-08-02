@@ -15,7 +15,6 @@ from keboola.component.base import ComponentBase, sync_action
 from keboola.component.sync_actions import ValidationResult, MessageType
 from keboola.component.dao import TableDefinition
 from keboola.component.exceptions import UserException
-from keboola.utils.helpers import comma_separated_values_to_list
 
 from configuration import Configuration
 from client.AIClient import OpenAIClient, AIClientException
