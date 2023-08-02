@@ -213,6 +213,11 @@ class Component(ComponentBase):
 
     @sync_action('testPrompt')
     def test_prompt(self) -> ValidationResult:
+        """
+        Uses table preview from sapi to apply prompt for on a few table rows.
+        It uses same functions as the run method. The only exception is replacing newlines with spaces to ensure
+        proper formatting for ValidationResult.
+        """
         self.init_configuration()
 
         client = self.get_client()
@@ -244,7 +249,7 @@ class Component(ComponentBase):
         table = "| " + " | ".join(headers) + " |\n"
         table += "| " + " | ".join(["---"] * len(headers)) + " |\n"
         for row in data:
-            row_values = [str(row[header]) for header in headers]
+            row_values = [str(row[header]).replace("\n", " ") for header in headers]
             table += "| " + " | ".join(row_values) + " |\n"
         return table
 
