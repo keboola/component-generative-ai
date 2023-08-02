@@ -9,9 +9,7 @@ import time
 from typing import List
 import json
 import os
-import backoff
 
-import openai
 import pystache as pystache
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.sync_actions import ValidationResult, MessageType
@@ -20,6 +18,7 @@ from keboola.component.exceptions import UserException
 from keboola.utils.helpers import comma_separated_values_to_list
 
 from configuration import Configuration
+from client.AIClient import OpenAIClient, AIClientException
 
 # configuration variables
 RESULT_COLUMN_NAME = 'result_value'
@@ -33,12 +32,6 @@ KEY_STORE_RESULTS_ON_FAILURE = 'store_results_on_failure'
 # component will fail with readable message on initialization.
 REQUIRED_PARAMETERS = [KEY_API_TOKEN, KEY_PROMPT, KEY_DESTINATION]
 REQUIRED_IMAGE_PARS = []
-
-CHAT_COMPLETION_MODELS = ["gpt-4", "gpt-4-0314", "gpt-4-32k", "gpt-4-32k-0314", "gpt-3.5-turbo", "gpt-3.5-turbo-0301"]
-
-
-def on_giveup(details: dict):
-    raise UserException(details.get("exception"))
 
 
 class Component(ComponentBase):
@@ -54,6 +47,7 @@ class Component(ComponentBase):
 
     def __init__(self):
         super().__init__()
+        self.api_key = None
         self.model_options = None
         self.inference_function = None
         self.store_results_on_failure = None
@@ -70,6 +64,8 @@ class Component(ComponentBase):
         """
         self.init_configuration()
 
+        client = self.get_client()
+
         input_table, out_table = self.prepare_tables()
 
         logging.info('Querying OpenAI.')
@@ -80,7 +76,7 @@ class Component(ComponentBase):
                 writer.writeheader()
                 for row in reader:
                     prompt = self._build_prompt(self.input_keys, row)
-                    result = self.inference_function(self.model, prompt, **self.model_options)
+                    result = client.infer(prompt, **self.model_options)
 
                     if result:
                         writer.writerow(self._build_output_row(out_table.primary_key, row, result))
@@ -112,16 +108,17 @@ class Component(ComponentBase):
             else:
                 logging.warning("Running on old queue, results cannot be stored on failure.")
 
-        openai.api_key = self._configuration.pswd_api_token
+        self.api_key = self._configuration.pswd_api_token
 
         self.model = self._configuration.custom_model or self._configuration.predefined_model
         logging.info(f"The component is using the model : {self.model}")
 
         self.model_options = dataclasses.asdict(self._configuration.additional_options)
 
-        self.inference_function = self.get_inference_function(self.model)
+    def get_client(self):
+        return OpenAIClient(self.api_key, self.model)
 
-    def prepare_tables(self, include_output_table: bool = True):
+    def prepare_tables(self):
         input_table = self._get_input_table()
         if missing_keys := [key for key in self.input_keys if key not in input_table.columns]:
             raise UserException(f'The columns "{missing_keys}" need to be present in the input data!')
@@ -132,53 +129,6 @@ class Component(ComponentBase):
             raise UserException(f'Some specified primary keys are not in the input table: {missing_keys}')
 
         return input_table, out_table
-
-    @backoff.on_exception(backoff.expo,
-                          (openai.error.RateLimitError, openai.error.APIError, openai.error.ServiceUnavailableError),
-                          max_tries=3, on_giveup=on_giveup)
-    def get_completion_result(self, model, prompt, **model_options):
-        try:
-            response = openai.Completion.create(
-                model=model,
-                prompt=prompt,
-                **model_options
-            )
-        except openai.error.InvalidRequestError as e:
-            logging.error(f"Invalid Request Error: {e}")
-            self.failed_requests += 1
-            return None
-        except openai.error.AuthenticationError as e:
-            raise UserException("Your OpenAI API key is invalid") from e
-        except openai.error.APIConnectionError as e:
-            raise UserException(f"API connection Error: {e}") from e
-
-        return response.choices[0].text
-
-    @backoff.on_exception(backoff.expo,
-                          (openai.error.RateLimitError, openai.error.APIError, openai.error.ServiceUnavailableError),
-                          max_tries=3, on_giveup=on_giveup)
-    def get_chat_completion_result(self, model, prompt, **model_options):
-        try:
-            response = openai.ChatCompletion.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                **model_options
-            )
-        except openai.error.InvalidRequestError as e:
-            logging.error(f"Invalid Request Error: {e}")
-            self.failed_requests += 1
-            return None
-        except openai.error.AuthenticationError as e:
-            raise UserException("Your OpenAI API key is invalid") from e
-        except openai.error.APIConnectionError as e:
-            raise UserException(f"API connection Error: {e}") from e
-
-        return response.choices[0].get("message", {}).get("content")
-
-    def get_inference_function(self, model_name: str):
-        if model_name in CHAT_COMPLETION_MODELS:
-            return self.get_chat_completion_result
-        return self.get_completion_result
 
     @staticmethod
     def _get_sleep(params):
@@ -254,6 +204,9 @@ class Component(ComponentBase):
     @sync_action('testQuery')
     def test_query(self) -> ValidationResult:
         self.init_configuration()
+
+        client = self.get_client()
+
         input_table, out_table = self.prepare_tables()
 
         results = []
@@ -263,7 +216,7 @@ class Component(ComponentBase):
             row_count = 0
             for row in reader:
                 prompt = self._build_prompt(self.input_keys, row)
-                result = self.inference_function(self.model, prompt, **self.model_options)
+                result = client.infer(prompt, **self.model_options)
 
                 if result:
                     results.append(self._build_output_row(out_table.primary_key, row, result))
