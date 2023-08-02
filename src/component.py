@@ -37,6 +37,8 @@ KEY_STORE_RESULTS_ON_FAILURE = 'store_results_on_failure'
 REQUIRED_PARAMETERS = [KEY_API_TOKEN, KEY_PROMPT, KEY_DESTINATION]
 REQUIRED_IMAGE_PARS = []
 
+PREVIEW_LIMIT = 10
+
 
 class Component(ComponentBase):
     """
@@ -51,6 +53,7 @@ class Component(ComponentBase):
 
     def __init__(self):
         super().__init__()
+        self.max_token_spend = None
         self.api_key = None
         self.model_options = None
         self.inference_function = None
@@ -93,6 +96,10 @@ class Component(ComponentBase):
                     else:
                         self.failed_requests += 1
 
+                    if self.max_token_spend and self.tokens_used >= self.max_token_spend:
+                        logging.error(f"The token spend limit of {self.max_token_spend} has been reached.")
+                        break
+
                     time.sleep(self.sleep_time)
 
         self.write_manifest(out_table)
@@ -110,6 +117,12 @@ class Component(ComponentBase):
         self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
 
         self.sleep_time = self._configuration.sleep
+
+        if self._configuration.max_token_spend:
+            self.max_token_spend = self._configuration.max_token_spend
+            logging.warning(f"Max token spend has been set to {self.max_token_spend}. If the component reaches "
+                            f"this limit, it will exit.")
+
         self.input_keys = self._get_input_keys(self._configuration.prompt)
 
         self.queue_v2 = False
@@ -226,7 +239,7 @@ class Component(ComponentBase):
         client = self.get_client()
 
         table_id = self._get_storage_source()
-        table_preview = self._get_table_preview(table_id, limit=10)
+        table_preview = self._get_table_preview(table_id, limit=PREVIEW_LIMIT)
 
         preview_size = len(table_preview)
         table_size = self._get_table_size(table_id)
@@ -307,6 +320,12 @@ class Component(ComponentBase):
 
     def _get_storage_token(self) -> str:
         return self.configuration.parameters.get('#storage_token') or self.environment_variables.token
+
+    def _set_tokens_limit(self) -> any:
+        if self._configuration.max_token_spend > 0:
+            self.max_token_spend = self._configuration.max_token_spend
+            logging.warning(f"Max token spend has been set to {self.max_token_spend}. If the component reaches "
+                            f"this limit, it will exit.")
 
 
 """

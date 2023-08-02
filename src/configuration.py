@@ -71,5 +71,6 @@ class Configuration(ConfigurationBase):
     destination: Destination
     additional_options: AdditionalOptions
     debug: bool = False
+    max_token_spend: int = False
     predefined_model: str = ""
     custom_model: str = ""
