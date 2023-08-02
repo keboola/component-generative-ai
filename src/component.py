@@ -155,7 +155,6 @@ class Component(ComponentBase):
 
         if not (out_table_name := destination_config.get("output_table_name")):
             out_table_name = f"in.c-kds-team-app-generative-ai_{self.environment_variables.config_row_id}.csv"
-            self.environment_variables.
         else:
             out_table_name = f"{out_table_name}.csv"
 
