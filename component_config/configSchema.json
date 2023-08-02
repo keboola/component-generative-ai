@@ -1,18 +1,21 @@
 {
   "type": "object",
-  "title": "extractor configuration",
+  "title": "Data Source Configuration",
   "required": [
-    "print_hello"
+    "#api_token"
   ],
   "properties": {
-    "print_hello": {
-      "type": "boolean",
-      "title": "Print Hello",
+    "#api_token": {
+      "type": "string",
+      "format": "password",
+      "title": "API Key",
       "propertyOrder": 1
     },
-    "debug": {
-      "type": "boolean",
-      "title": "Debug",
+    "sleep": {
+      "type": "number",
+      "title": "Sleep Time",
+      "description": "in seconds",
+      "default": 0,
       "propertyOrder": 2
     }
   }
