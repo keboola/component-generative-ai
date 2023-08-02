@@ -212,7 +212,7 @@ class Component(ComponentBase):
         return [{"value": c, "label": c} for c in input_table.columns]
 
     @sync_action('testPrompt')
-    def test_query(self) -> ValidationResult:
+    def test_prompt(self) -> ValidationResult:
         self.init_configuration()
 
         client = self.get_client()

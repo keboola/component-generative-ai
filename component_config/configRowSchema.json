@@ -119,8 +119,8 @@
       "propertyOrder": 30,
       "options": {
         "async": {
-          "label": "Test Query",
-          "action": "testQuery"
+          "label": "Test Prompt",
+          "action": "testPrompt"
         }
       }
     },
