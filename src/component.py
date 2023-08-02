@@ -155,15 +155,11 @@ class Component(ComponentBase):
         destination_config = self.configuration.parameters['destination']
 
         if not (out_table_name := destination_config.get("output_table_name")):
-            out_table_name = f"{self.environment_variables.component_id}_{self.environment_variables.config_row_id}.csv"
+            out_table_name = f"generative-ai_{self.environment_variables.config_row_id}.csv"
         else:
             out_table_name = f"{out_table_name}.csv"
 
-        # backward compatibility with the old string element
-        if destination_config.get('primary_keys', None):
-            primary_key = comma_separated_values_to_list(destination_config.get('primary_keys', None))
-        else:
-            primary_key = destination_config.get('primary_keys_array', [])
+        primary_key = destination_config.get('primary_keys_array', [])
 
         incremental_load = destination_config.get('incremental_load', False)
         return self.create_out_table_definition(out_table_name, primary_key=primary_key,
