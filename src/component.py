@@ -227,6 +227,9 @@ class Component(ComponentBase):
         table_id = self._get_storage_source()
         table_preview = self._get_table_preview(table_id)
 
+        preview_size = len(table_preview)
+        table_size = self._get_table_size(table_id)
+
         destination_config = self.configuration.parameters['destination']
         primary_key = destination_config.get('primary_keys_array', [])
 
@@ -240,12 +243,23 @@ class Component(ComponentBase):
                 results.append(self._build_output_row(primary_key, row, result))
 
         if results:
+
+            estimated_token_usage = self.estimate_token_usage(preview_size, table_size)
+
             markdown = self.create_markdown_table(results)
-            tokens_used_info = f"\nTokens used: {self.tokens_used}"
+            tokens_used_info = f"\nTokens used during test prompting: {self.tokens_used}"
+            token_estimation_info = f"\nEstimated token usage for the whole input table: {estimated_token_usage}"
             markdown += tokens_used_info
+            markdown += token_estimation_info
             return ValidationResult(markdown, MessageType.SUCCESS)
         else:
             return ValidationResult("Query returned no data.", MessageType.WARNING)
+
+    def estimate_token_usage(self, preview_size: int, table_size: int) -> int:
+        """Estimates token usage based on number of tokens used during test_prompt."""
+        if preview_size > 0:
+            return int((self.tokens_used / preview_size) * table_size)
+        raise UserException("Cannot process tables with no rows.")
 
     @staticmethod
     def create_markdown_table(data):
@@ -269,6 +283,13 @@ class Component(ComponentBase):
             data.append(row)
 
         return data
+
+    def _get_table_size(self, table_id: str) -> int:
+        """Returns number of rows for specified table_id."""
+        tables = Tables(self._get_kbc_root_url(), self._get_storage_token())
+        detail = tables.detail(table_id)
+        rows_count = int(detail.get("rowsCount"))
+        return rows_count
 
     def _get_kbc_root_url(self) -> str:
         return f'https://{self.environment_variables.stack_id}' if self.environment_variables.stack_id \
