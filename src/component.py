@@ -67,9 +67,6 @@ class Component(ComponentBase):
         """
         self.init_configuration()
 
-        self.test_query()
-        exit()
-
         client = self.get_client()
 
         input_table, out_table = self.prepare_tables()
@@ -214,7 +211,7 @@ class Component(ComponentBase):
         input_table = self._get_input_table()
         return [{"value": c, "label": c} for c in input_table.columns]
 
-    @sync_action('testQuery')
+    @sync_action('testPrompt')
     def test_query(self) -> ValidationResult:
         self.init_configuration()
 
