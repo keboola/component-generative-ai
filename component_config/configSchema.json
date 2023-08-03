@@ -2,6 +2,7 @@
   "type": "object",
   "title": "Data Source Configuration",
   "required": [
+    "service",
     "#api_token"
   ],
   "properties": {

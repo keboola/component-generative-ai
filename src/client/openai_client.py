@@ -54,9 +54,11 @@ class BaseOpenAIClient(CommonClient, ABC):
         max_tries=3,
         on_giveup=on_giveup
     )
-    def get_chat_completion_result(self, model: str, prompt: str, **model_options) -> Tuple[Optional[str], Optional[int]]:
+    def get_chat_completion_result(self, model: str, prompt: str, **model_options)\
+            -> Tuple[Optional[str], Optional[int]]:
         try:
-            response = openai.ChatCompletion.create(model=model, messages=[{"role": "user", "content": prompt}], **model_options)
+            response = openai.ChatCompletion.create(model=model,
+                                                    messages=[{"role": "user", "content": prompt}], **model_options)
         except openai.error.InvalidRequestError as e:
             logging.error(f"Invalid Request Error: {e}")
             return None, 0
