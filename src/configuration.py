@@ -63,14 +63,23 @@ class AdditionalOptions(ConfigurationBase):
 
 
 @dataclass
-class Configuration(ConfigurationBase):
+class Authentication(ConfigurationBase):
+    service: str
     pswd_api_token: str
+    api_base: str = ""
+    deployment_id: str = ""
+    api_version: str = ""
+
+
+@dataclass
+class Configuration(ConfigurationBase):
     model_type: str
     prompt: str
     sleep: float
     destination: Destination
     additional_options: AdditionalOptions
+    authentication: Authentication
     debug: bool = False
-    max_token_spend: int = False
+    max_token_spend: int = 0
     predefined_model: str = ""
     custom_model: str = ""

@@ -22,7 +22,7 @@ from kbcstorage.tables import Tables
 
 
 from configuration import Configuration
-from client.openai_client import OpenAIClient
+from client.openai_client import OpenAIClient, AzureOpenAIClient
 from client.base import AIClientException
 
 # configuration variables
@@ -54,8 +54,14 @@ class Component(ComponentBase):
 
     def __init__(self):
         super().__init__()
-        self.max_token_spend = None
+        self.service = None
         self.api_key = None
+        # For Azure OpenAI
+        self.deployment_id = None
+        self.api_base = None
+        self.api_version = None
+
+        self.max_token_spend = None
         self.model_options = None
         self.store_results_on_failure = None
         self.input_keys = None
@@ -96,7 +102,7 @@ class Component(ComponentBase):
                     else:
                         self.failed_requests += 1
 
-                    if self.max_token_spend and self.tokens_used >= self.max_token_spend:
+                    if self.max_token_spend != 0 and self.tokens_used >= self.max_token_spend:
                         logging.error(f"The token spend limit of {self.max_token_spend} has been reached.")
                         break
 
@@ -118,7 +124,7 @@ class Component(ComponentBase):
 
         self.sleep_time = self._configuration.sleep
 
-        if self._configuration.max_token_spend:
+        if self._configuration.max_token_spend > 0:
             self.max_token_spend = self._configuration.max_token_spend
             logging.warning(f"Max token spend has been set to {self.max_token_spend}. If the component reaches "
                             f"this limit, it will exit.")
@@ -134,7 +140,12 @@ class Component(ComponentBase):
             else:
                 logging.warning("Running on old queue, results cannot be stored on failure.")
 
-        self.api_key = self._configuration.pswd_api_token
+        self.service = self._configuration.authentication.service
+        if self._configuration.authentication.service == "azure_openai":
+            self.api_base = self._configuration.authentication.api_base
+            self.deployment_id = self._configuration.authentication.deployment_id
+            self.api_version = self._configuration.authentication.api_version
+        self.api_key = self._configuration.authentication.pswd_api_token
 
         self.model = self._configuration.custom_model or self._configuration.predefined_model
         logging.info(f"The component is using the model : {self.model}")
@@ -142,7 +153,10 @@ class Component(ComponentBase):
         self.model_options = dataclasses.asdict(self._configuration.additional_options)
 
     def get_client(self):
-        return OpenAIClient(self.api_key)
+        if self.service == "openai":
+            return OpenAIClient(self.api_key)
+        elif self.service == "azure_openai":
+            return AzureOpenAIClient(self.api_key, self.api_base, self.deployment_id, self.api_version)
 
     def prepare_tables(self):
         input_table = self._get_input_table()

@@ -83,7 +83,7 @@ class OpenAIClient(BaseOpenAIClient):
 
 
 class AzureOpenAIClient(BaseOpenAIClient):
-    def __init__(self, api_token, api_base, api_version, deployment_id):
+    def __init__(self, api_token, api_base, deployment_id, api_version):
         super().__init__(api_token)
         openai.api_type = "azure"
         openai.api_base = api_base

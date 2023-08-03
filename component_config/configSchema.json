@@ -1,61 +1,66 @@
 {
   "type": "object",
   "title": "Data Source Configuration",
-  "required": [
-    "service",
-    "#api_token"
-  ],
   "properties": {
-    "service": {
-      "type": "string",
-      "title": "AI Service Provider",
-      "enum": [
-          "openai",
-          "azure_openai",
-          "llama_2"
-        ],
-      "default": "open_ai",
-      "options": {
-        "enum_titles": [
-            "OpenAI",
-            "Azure OpenAI",
-            "Llama 2"
-          ]
+    "authentication": {
+      "required": [
+        "service",
+        "#api_token"
+      ],
+      "properties": {
+        "service": {
+          "type": "string",
+          "title": "AI Service Provider",
+          "enum": [
+            "openai",
+            "azure_openai",
+            "llama_2"
+          ],
+          "default": "open_ai",
+          "options": {
+            "enum_titles": [
+              "OpenAI",
+              "Azure OpenAI",
+              "Llama 2"
+            ]
+          },
+          "propertyOrder": 1
+        },
+        "#api_token": {
+          "type": "string",
+          "format": "password",
+          "title": "API Key",
+          "propertyOrder": 2
+        },
+        "api_base": {
+          "type": "string",
+          "title": "API Base",
+          "options": {
+            "dependencies": {
+              "service": "azure_openai"
+            }
+          },
+          "propertyOrder": 3
+        },
+        "deployment_id": {
+          "type": "string",
+          "title": "Deployment ID",
+          "options": {
+            "dependencies": {
+              "service": "azure_openai"
+            }
+          },
+          "propertyOrder": 4
+        }
       },
       "propertyOrder": 1
     },
-    "#api_token": {
-      "type": "string",
-      "format": "password",
-      "title": "API Key",
-      "propertyOrder": 2
-    },
-    "api_base": {
-      "type": "string",
-      "title": "API Base",
-      "options": {
-        "dependencies": {
-          "service": "azure_openai"
-        }
-      },
-      "propertyOrder": 3
-    },
-    "deployment_id": {
-      "type": "string",
-      "title": "Deployment ID",
-      "options": {
-        "dependencies": {
-          "service": "azure_openai"
-        }
-      },
-      "propertyOrder": 4
-    },
     "sleep": {
       "type": "number",
-      "title": "Sleep Time",
-      "description": "in seconds",
+      "title": "Sleep Time (optional)",
+      "description": "Time to wait between individual requests in seconds.",
       "default": 0,
-      "propertyOrder": 5
+      "propertyOrder": 2
     }
   }
 }
