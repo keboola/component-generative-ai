@@ -3,6 +3,7 @@
   "title": "Data Source Configuration",
   "properties": {
     "authentication": {
+      "title": "Authentication",
       "required": [
         "service",
         "#api_token"
@@ -51,6 +52,16 @@
             }
           },
           "propertyOrder": 4
+        },
+        "api_version": {
+          "type": "string",
+          "title": "API Version",
+          "options": {
+            "dependencies": {
+              "service": "azure_openai"
+            }
+          },
+          "propertyOrder": 5
         }
       },
       "propertyOrder": 1

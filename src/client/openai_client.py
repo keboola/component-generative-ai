@@ -28,7 +28,8 @@ class OpenAIClient(CommonClient, ABC):
             return self.get_chat_completion_result
         return self.get_completion_result
 
-    def get_completion_result(self, model_name: str, prompt: str, **model_options)\
+    @staticmethod
+    def get_completion_result(model_name: str, prompt: str, **model_options)\
             -> Tuple[Optional[str], Optional[int]]:
         response = openai.Completion.create(model=model_name, prompt=prompt, **model_options)
 
