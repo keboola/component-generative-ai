@@ -7,7 +7,7 @@ class CommonClient(ABC):
     """
 
     @abstractmethod
-    def infer(self, model, prompt, **model_options):
+    def infer(self, model_name: str, prompt: str, **model_options):
         """
         Note that the Creator may also provide some default implementation of
         the factory method.
