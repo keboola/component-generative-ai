@@ -22,7 +22,8 @@ from kbcstorage.tables import Tables
 
 
 from configuration import Configuration
-from client.AIClient import OpenAIClient, AIClientException
+from client.openai_client import OpenAIClient
+from client.base import AIClientException
 
 # configuration variables
 RESULT_COLUMN_NAME = 'result_value'
@@ -56,7 +57,6 @@ class Component(ComponentBase):
         self.max_token_spend = None
         self.api_key = None
         self.model_options = None
-        self.inference_function = None
         self.store_results_on_failure = None
         self.input_keys = None
         self.sleep_time = None
@@ -86,7 +86,7 @@ class Component(ComponentBase):
                     prompt = self._build_prompt(self.input_keys, row)
 
                     try:
-                        result, token_usage = client.infer(prompt, **self.model_options)
+                        result, token_usage = client.infer(self.model, prompt, **self.model_options)
                         self.tokens_used += token_usage
                     except AIClientException as e:
                         raise UserException(e) from e
@@ -142,7 +142,7 @@ class Component(ComponentBase):
         self.model_options = dataclasses.asdict(self._configuration.additional_options)
 
     def get_client(self):
-        return OpenAIClient(self.api_key, self.model)
+        return OpenAIClient(self.api_key)
 
     def prepare_tables(self):
         input_table = self._get_input_table()
@@ -250,7 +250,7 @@ class Component(ComponentBase):
         results = []
         for row in table_preview:
             prompt = self._build_prompt(self.input_keys, row)
-            result, token_usage = client.infer(prompt, **self.model_options)
+            result, token_usage = client.infer(self.model, prompt, **self.model_options)
             self.tokens_used += token_usage
 
             if result:
