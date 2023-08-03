@@ -95,7 +95,7 @@ class Component(ComponentBase):
                         result, token_usage = client.infer(self.model, prompt, **self.model_options)
                         self.tokens_used += token_usage
                     except AIClientException as e:
-                        raise UserException(e) from e
+                        raise UserException(f"The component failed to process request. {e}") from e
 
                     if result:
                         writer.writerow(self._build_output_row(out_table.primary_key, row, result))
