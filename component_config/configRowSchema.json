@@ -103,6 +103,7 @@
       }
     },
     "prompt_options": {
+      "propertyOrder": 20,
       "type": "object",
       "title": "Prompt Options",
       "properties": {
