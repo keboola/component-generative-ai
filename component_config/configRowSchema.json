@@ -1,10 +1,10 @@
 {
   "type": "object",
-  "title": "extractor configuration",
+  "title": "Component configuration",
   "required": [
     "model_type",
     "additional_options",
-    "prompt",
+    "prompt_options",
     "destination"
   ],
   "properties": {
@@ -102,25 +102,46 @@
         }
       }
     },
-    "prompt": {
-      "type": "string",
-      "format": "textarea",
-      "title": "Prompt",
-      "default": "Extract keywords from this text:\n\n\"\"\"\n[[INPUT]]\n\"\"\"",
-      "description": "The prompt and data input pattern. Refer to the input column using placeholder [[INPUT_COLUMN]]. The input table must contain the referenced column. You can find best practices for prompt engineering in <a href=\"https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-openai-api\">OpenAI help pages</a>.",
-      "propertyOrder": 20,
-      "options": {
-        "input_height": "250px"
-      }
-    },
-    "validation_button": {
-      "type": "button",
-      "format": "sync-action",
-      "propertyOrder": 30,
-      "options": {
-        "async": {
-          "label": "Test Prompt",
-          "action": "testPrompt"
+    "prompt_options": {
+      "type": "object",
+      "title": "Prompt Options",
+      "properties": {
+        "prompt_type": {
+          "type": "string",
+          "title": "Prompt Type",
+          "default": "custom",
+          "description": "Pick from predefined or enter a custom prompt.",
+          "enum": [
+            "predefined",
+            "custom"
+          ],
+          "propertyOrder": 10
+        },
+        "prompt": {
+          "type": "string",
+          "format": "textarea",
+          "title": "Prompt",
+          "default": "Extract keywords from this text:\n\n\"\"\"\n[[INPUT_COLUMN]]\n\"\"\"",
+          "description": "The prompt and data input pattern. Refer to the input column using placeholder [[INPUT_COLUMN]]. The input table must contain the referenced column. You can find best practices for prompt engineering in <a href=\"https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-openai-api\">OpenAI help pages</a>.",
+          "propertyOrder": 20,
+          "options": {
+            "input_height": "250px",
+            "async": {
+              "label": "Load Prompt",
+              "action": "loadPrompt"
+            }
+          }
+        },
+        "validation_button": {
+          "type": "button",
+          "format": "sync-action",
+          "propertyOrder": 30,
+          "options": {
+            "async": {
+              "label": "Test Prompt",
+              "action": "testPrompt"
+            }
+          }
         }
       }
     },

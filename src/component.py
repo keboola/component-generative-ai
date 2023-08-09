@@ -39,6 +39,7 @@ REQUIRED_PARAMETERS = [KEY_API_TOKEN, KEY_PROMPT, KEY_DESTINATION]
 REQUIRED_IMAGE_PARS = []
 
 PREVIEW_LIMIT = 5
+PROMPT_TEMPLATES = 'templates/prompts.json'
 
 
 class Component(ComponentBase):
@@ -129,7 +130,7 @@ class Component(ComponentBase):
             logging.warning(f"Max token spend has been set to {self.max_token_spend}. If the component reaches "
                             f"this limit, it will exit.")
 
-        self.input_keys = self._get_input_keys(self._configuration.prompt)
+        self.input_keys = self._get_input_keys(self._configuration.prompt_options.prompt)
 
         self.queue_v2 = False
         self.store_results_on_failure = self._configuration.destination.store_results_on_failure
@@ -148,7 +149,7 @@ class Component(ComponentBase):
         self.api_key = self._configuration.authentication.pswd_api_token
 
         self.model = self._configuration.custom_model or self._configuration.predefined_model
-        logging.info(f"The component is using the model : {self.model}")
+        logging.info(f"The component is using the model: {self.model}")
 
         self.model_options = dataclasses.asdict(self._configuration.additional_options)
 
@@ -230,7 +231,7 @@ class Component(ComponentBase):
                 with open(path, 'w') as f:
                     json.dump(data, f)
 
-    @sync_action('list_pkeys')
+    @sync_action('listPkeys')
     def list_table_columns(self):
         """
         Sync action to fill the UI element of primary keys.

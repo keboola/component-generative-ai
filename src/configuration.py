@@ -72,9 +72,15 @@ class Authentication(ConfigurationBase):
 
 
 @dataclass
+class PromptOptions(ConfigurationBase):
+    prompt_type: str
+    prompt: str
+
+
+@dataclass
 class Configuration(ConfigurationBase):
     model_type: str
-    prompt: str
+    prompt_options: PromptOptions
     sleep: float
     destination: Destination
     additional_options: AdditionalOptions
