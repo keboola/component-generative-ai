@@ -126,11 +126,7 @@
           "description": "The prompt and data input pattern. Refer to the input column using placeholder [[INPUT_COLUMN]]. The input table must contain the referenced column. You can find best practices for prompt engineering in <a href=\"https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-openai-api\">OpenAI help pages</a>.",
           "propertyOrder": 20,
           "options": {
-            "input_height": "250px",
-            "async": {
-              "label": "Load Prompt",
-              "action": "loadPrompt"
-            }
+            "input_height": "250px"
           }
         },
         "validation_button": {
