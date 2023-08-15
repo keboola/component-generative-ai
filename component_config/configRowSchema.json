@@ -107,17 +107,6 @@
       "type": "object",
       "title": "Prompt Options",
       "properties": {
-        "prompt_type": {
-          "type": "string",
-          "title": "Prompt Type",
-          "default": "custom",
-          "description": "Pick from predefined or enter a custom prompt.",
-          "enum": [
-            "predefined",
-            "custom"
-          ],
-          "propertyOrder": 10
-        },
         "prompt": {
           "type": "string",
           "format": "textarea",

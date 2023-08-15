@@ -50,7 +50,7 @@ class Component(ComponentBase):
         For easier debugging the data folder is picked up by default from `../data` path,
         relative to working directory.
 
-        If `debug` parameter is present in the `config.json`, the default logger is set to verbose DEBUG mode.
+        If `debug` parameter is present in the `config_azure.json`, the default logger is set to verbose DEBUG mode.
     """
 
     def __init__(self):
@@ -208,7 +208,7 @@ class Component(ComponentBase):
         return keys
 
     def _build_prompt(self, input_keys: List[str], row: dict):
-        prompt = self.configuration.parameters['prompt']
+        prompt = self._configuration.prompt_options.prompt
         for input_key in input_keys:
             prompt = prompt.replace('[[' + input_key + ']]', row[input_key])
         return prompt

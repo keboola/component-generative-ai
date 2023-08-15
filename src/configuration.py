@@ -73,7 +73,6 @@ class Authentication(ConfigurationBase):
 
 @dataclass
 class PromptOptions(ConfigurationBase):
-    prompt_type: str
     prompt: str
 
 
