@@ -317,8 +317,10 @@ class Component(ComponentBase):
         preview_size = len(table_preview)
         table_size = self._get_table_size(table_id)
 
-        destination_config = self.configuration.parameters['destination']
-        primary_key = destination_config.get('primary_keys_array', [])
+        primary_key = self._configuration.destination.primary_keys_array
+
+        if missing_keys := [key for key in self.input_keys if key not in table_preview]:
+            raise UserException(f'The columns "{missing_keys}" need to be present in the input data!')
 
         results = []
         for row in table_preview:

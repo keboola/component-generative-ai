@@ -118,7 +118,7 @@
             "text_shortener",
             "grammar_correction"
           ],
-          "description": "Select the template to load.",
+          "description": "Select the template to load. You can then copy the template into the Prompt window.",
           "propertyOrder": 1,
           "options": {
             "enum_titles": [
