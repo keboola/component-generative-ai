@@ -230,63 +230,6 @@ class Component(ComponentBase):
                 with open(path, 'w') as f:
                     json.dump(data, f)
 
-    @sync_action('listPkeys')
-    def list_table_columns(self):
-        """
-        Sync action to fill the UI element of primary keys.
-
-        Returns:
-
-        """
-        input_table = self._get_input_table()
-        return [{"value": c, "label": c} for c in input_table.columns]
-
-    @sync_action('testPrompt')
-    def test_prompt(self) -> ValidationResult:
-        """
-        Uses table preview from sapi to apply prompt for on a few table rows.
-        It uses same functions as the run method. The only exception is replacing newlines with spaces to ensure
-        proper formatting for ValidationResult.
-        """
-        self.init_configuration()
-
-        client = self.get_client()
-
-        table_id = self._get_storage_source()
-        table_preview = self._get_table_preview(table_id, limit=PREVIEW_LIMIT)
-
-        preview_size = len(table_preview)
-        table_size = self._get_table_size(table_id)
-
-        destination_config = self.configuration.parameters['destination']
-        primary_key = destination_config.get('primary_keys_array', [])
-
-        results = []
-        for row in table_preview:
-            prompt = self._build_prompt(self.input_keys, row)
-            result, token_usage = client.infer(self.model, prompt, **self.model_options)
-            self.tokens_used += token_usage
-
-            if result:
-                results.append(self._build_output_row(primary_key, row, result))
-
-        if results:
-            estimated_token_usage = self.estimate_token_usage(preview_size, table_size)
-
-            markdown = self.create_markdown_table(results)
-            tokens_used_info = f"\nTokens used during test prompting: {self.tokens_used}"
-            token_estimation_info = f"\nEstimated token usage for the whole input table: {estimated_token_usage}"
-            markdown += tokens_used_info
-            markdown += token_estimation_info
-            return ValidationResult(markdown, MessageType.SUCCESS)
-        else:
-            return ValidationResult("Query returned no data.", MessageType.WARNING)
-
-    @sync_action('getPromptTemplate')
-    def get_prompt_template(self) -> ValidationResult:
-        with open('templates/prompts.json', 'r') as json_file:
-            return json.load(json_file)
-
     def estimate_token_usage(self, preview_size: int, table_size: int) -> int:
         """Estimates token usage based on number of tokens used during test_prompt."""
         if preview_size > 0:
@@ -345,6 +288,71 @@ class Component(ComponentBase):
             self.max_token_spend = self._configuration.max_token_spend
             logging.warning(f"Max token spend has been set to {self.max_token_spend}. If the component reaches "
                             f"this limit, it will exit.")
+
+    @sync_action('listPkeys')
+    def list_table_columns(self):
+        """
+        Sync action to fill the UI element of primary keys.
+
+        Returns:
+
+        """
+        input_table = self._get_input_table()
+        return [{"value": c, "label": c} for c in input_table.columns]
+
+    @sync_action('testPrompt')
+    def test_prompt(self) -> ValidationResult:
+        """
+        Uses table preview from sapi to apply prompt for on a few table rows.
+        It uses same functions as the run method. The only exception is replacing newlines with spaces to ensure
+        proper formatting for ValidationResult.
+        """
+        self.init_configuration()
+
+        client = self.get_client()
+
+        table_id = self._get_storage_source()
+        table_preview = self._get_table_preview(table_id, limit=PREVIEW_LIMIT)
+
+        preview_size = len(table_preview)
+        table_size = self._get_table_size(table_id)
+
+        destination_config = self.configuration.parameters['destination']
+        primary_key = destination_config.get('primary_keys_array', [])
+
+        results = []
+        for row in table_preview:
+            prompt = self._build_prompt(self.input_keys, row)
+            result, token_usage = client.infer(self.model, prompt, **self.model_options)
+            self.tokens_used += token_usage
+
+            if result:
+                results.append(self._build_output_row(primary_key, row, result))
+
+        if results:
+            estimated_token_usage = self.estimate_token_usage(preview_size, table_size)
+
+            markdown = self.create_markdown_table(results)
+            tokens_used_info = f"\nTokens used during test prompting: {self.tokens_used}"
+            token_estimation_info = f"\nEstimated token usage for the whole input table: {estimated_token_usage}"
+            markdown += tokens_used_info
+            markdown += token_estimation_info
+            return ValidationResult(markdown, MessageType.SUCCESS)
+        else:
+            return ValidationResult("Query returned no data.", MessageType.WARNING)
+
+    @sync_action('getPromptTemplate')
+    def get_prompt_template(self) -> ValidationResult:
+        configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
+        template = configuration.prompt_templates.prompt_template
+
+        with open('templates/prompts.json', 'r') as json_file:
+            templates = json.load(json_file)
+
+        prompt = templates.get(template)
+        if not prompt:
+            raise UserException(f"Prompt template {template} does not exist!")
+        return ValidationResult(prompt, MessageType.SUCCESS)
 
 
 """

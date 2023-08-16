@@ -1,7 +1,7 @@
 import dataclasses
 import json
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 import dataconf
 
@@ -77,8 +77,14 @@ class PromptOptions(ConfigurationBase):
 
 
 @dataclass
+class PromptTemplates(ConfigurationBase):
+    prompt_template: str
+
+
+@dataclass
 class Configuration(ConfigurationBase):
     model_type: str
+    prompt_templates: Optional[PromptTemplates]
     prompt_options: PromptOptions
     sleep: float
     destination: Destination

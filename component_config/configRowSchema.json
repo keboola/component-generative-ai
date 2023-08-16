@@ -108,17 +108,28 @@
       "properties": {
         "prompt_template": {
           "type": "string",
-          "title": "Model",
+          "title": "Prompt Template",
           "enum": [
             "timestamp_from_date",
-            "invalid"
+            "remove_diacritics",
+            "add_diacritics",
+            "extract_topics",
+            "sentiment_scoring",
+            "text_shortener",
+            "grammar_correction"
           ],
           "description": "Select the template to load.",
           "propertyOrder": 1,
           "options": {
-            "dependencies": {
-              "model_type": "predefined"
-            }
+            "enum_titles": [
+              "Timestamp from date",
+              "Remove Diacritics",
+              "Add diacritics",
+              "Extract Topics",
+              "Sentiment Scoring",
+              "Text Shortener",
+              "Grammar Correction"
+            ]
           }
         },
         "load_prompt_template": {
