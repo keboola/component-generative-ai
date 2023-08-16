@@ -319,7 +319,7 @@ class Component(ComponentBase):
 
         primary_key = self._configuration.destination.primary_keys_array
 
-        if missing_keys := [key for key in self.input_keys if key not in table_preview]:
+        if missing_keys := [key for key in self.input_keys if key not in table_preview[0]]:
             raise UserException(f'The columns "{missing_keys}" need to be present in the input data!')
 
         results = []
