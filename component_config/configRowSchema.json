@@ -102,6 +102,41 @@
         }
       }
     },
+    "prompt_templates": {
+      "title": "Prompt Templates",
+      "propertyOrder": 15,
+      "properties": {
+        "prompt_template": {
+          "type": "string",
+          "title": "Model",
+          "enum": [
+            "timestamp_from_date",
+            "invalid"
+          ],
+          "description": "Select the template to load.",
+          "propertyOrder": 1,
+          "options": {
+            "dependencies": {
+              "model_type": "predefined"
+            }
+          }
+        },
+        "load_prompt_template": {
+          "type": "button",
+          "format": "sync-action",
+          "propertyOrder": 2,
+          "options": {
+            "dependencies": {
+              "model_type": "predefined"
+            },
+            "async": {
+              "label": "LOAD PROMPT TEMPLATE",
+              "action": "getPromptTemplate"
+            }
+          }
+        }
+      }
+    },
     "prompt_options": {
       "propertyOrder": 20,
       "type": "object",
@@ -124,7 +159,7 @@
           "propertyOrder": 30,
           "options": {
             "async": {
-              "label": "Test Prompt",
+              "label": "TEST PROMPT",
               "action": "testPrompt"
             }
           }

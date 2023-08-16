@@ -83,7 +83,6 @@ class Component(ComponentBase):
 
         input_table, out_table = self.prepare_tables()
 
-        logging.info('Querying OpenAI.')
         with open(input_table.full_path, 'r') as input_file:
             reader = csv.DictReader(input_file)
             with open(out_table.full_path, 'w+') as out_file:
@@ -282,6 +281,11 @@ class Component(ComponentBase):
             return ValidationResult(markdown, MessageType.SUCCESS)
         else:
             return ValidationResult("Query returned no data.", MessageType.WARNING)
+
+    @sync_action('getPromptTemplate')
+    def get_prompt_template(self) -> ValidationResult:
+        with open('templates/prompts.json', 'r') as json_file:
+            return json.load(json_file)
 
     def estimate_token_usage(self, preview_size: int, table_size: int) -> int:
         """Estimates token usage based on number of tokens used during test_prompt."""
