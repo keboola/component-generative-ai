@@ -124,7 +124,7 @@
             "enum_titles": [
               "Timestamp from date",
               "Remove Diacritics",
-              "Add diacritics",
+              "Add Diacritics",
               "Extract Topics",
               "Sentiment Scoring",
               "Text Shortener",

@@ -1,4 +1,4 @@
 {
   "timestamp_from_date": "Create a timestamp in \"YYYY-MM-DD HH:MM:SS\" format from the following date: \n\n\"\"\"\n[[INPUT_COLUMN]]\n\"\"\"",
-
+  "remove_diacritics": "Remove diacritics from the following text: \\n\\n\\\"\\\"\\\"\\n[[INPUT_COLUMN]]\\n\\\"\\\"\\\"\""
 }
