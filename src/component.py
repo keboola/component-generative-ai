@@ -346,7 +346,7 @@ class Component(ComponentBase):
         configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
         template = configuration.prompt_templates.prompt_template
 
-        with open('templates/prompts.json', 'r') as json_file:
+        with open('src/templates/prompts.json', 'r') as json_file:
             templates = json.load(json_file)
 
         prompt = templates.get(template)
