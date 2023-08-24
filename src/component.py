@@ -365,6 +365,7 @@ class Component(ComponentBase):
 
     @sync_action('listModels')
     def list_models(self):
+        self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
         self.service = self._configuration.authentication.service
         self.api_key = self._configuration.authentication.pswd_api_token
 
