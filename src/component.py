@@ -365,7 +365,14 @@ class Component(ComponentBase):
 
     @sync_action('listModels')
     def list_models(self):
-        self.init_configuration()
+        self.service = self._configuration.authentication.service
+        self.api_key = self._configuration.authentication.pswd_api_token
+
+        if self._configuration.authentication.service == "azure_openai":
+            self.api_base = self._configuration.authentication.api_base
+            self.deployment_id = self._configuration.authentication.deployment_id
+            self.api_version = self._configuration.authentication.api_version
+
         client = self.get_client()
         models = client.list_models()
         return [{"value": m, "label": m} for m in models]
