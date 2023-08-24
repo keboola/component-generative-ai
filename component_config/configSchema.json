@@ -22,7 +22,7 @@
             "enum_titles": [
               "OpenAI",
               "Azure OpenAI",
-              "Llama 2"
+              "Llama 2 (not implemented yet)"
             ]
           },
           "propertyOrder": 1
