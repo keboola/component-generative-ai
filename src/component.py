@@ -299,10 +299,11 @@ class Component(ComponentBase):
         Returns:
 
         """
-        table = self._get_input_table()
-        with open(table.full_path, 'r') as input_file:
-            reader = csv.DictReader(input_file)
-            headers = reader.fieldnames
+        self.init_configuration()
+        table_id = self._get_storage_source()
+        table_preview = self._get_table_preview(table_id, limit=PREVIEW_LIMIT)
+
+        headers = list(table_preview[0].keys())
 
         return [{"value": c, "label": c} for c in headers]
 
