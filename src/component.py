@@ -157,6 +157,8 @@ class Component(ComponentBase):
             return OpenAIClient(self.api_key)
         elif self.service == "azure_openai":
             return AzureOpenAIClient(self.api_key, self.api_base, self.deployment_id, self.api_version)
+        else:
+            raise UserException(f"{self.service} service is not implemented yet.")
 
     def prepare_tables(self):
         input_table = self._get_input_table()

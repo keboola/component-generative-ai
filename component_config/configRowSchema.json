@@ -215,7 +215,11 @@
           },
           "uniqueItems": true,
           "options": {
-            "tags": true
+            "tags": true,
+              "async": {
+                "label": "Re-load test columns",
+                "action": "testColumns"
+            }
           },
           "description": "You can enter multiple columns seperated by commas at once e.g., id, other_id. If a primary key is set, updates can be done on the table by selecting incremental loads. The primary key can consist of multiple columns. The primary key of an existing table cannot be changed.",
           "propertyOrder": 120
