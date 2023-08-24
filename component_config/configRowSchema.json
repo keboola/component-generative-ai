@@ -2,7 +2,6 @@
   "type": "object",
   "title": "Component configuration",
   "required": [
-    "model",
     "additional_options",
     "prompt_options",
     "destination"
