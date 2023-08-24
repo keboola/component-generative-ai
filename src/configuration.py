@@ -1,7 +1,7 @@
 import dataclasses
 import json
-from dataclasses import dataclass
-from typing import List, Optional
+from dataclasses import dataclass, field
+from typing import List
 
 import dataconf
 
@@ -83,8 +83,6 @@ class PromptTemplates(ConfigurationBase):
 
 @dataclass
 class Configuration(ConfigurationBase):
-    prompt_templates: Optional[PromptTemplates]
-    prompt_options: PromptOptions
     sleep: float
     destination: Destination
     additional_options: AdditionalOptions
@@ -92,3 +90,5 @@ class Configuration(ConfigurationBase):
     model: str
     debug: bool = False
     max_token_spend: int = 0
+    prompt_templates: PromptTemplates = field(default_factory=lambda: PromptTemplates(prompt_template=""))
+    prompt_options: PromptOptions = field(default_factory=lambda: PromptOptions(prompt=""))

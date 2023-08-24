@@ -50,7 +50,7 @@ class Component(ComponentBase):
         For easier debugging the data folder is picked up by default from `../data` path,
         relative to working directory.
 
-        If `debug` parameter is present in the `config_azure.json`, the default logger is set to verbose DEBUG mode.
+        If `debug` parameter is present in the `config.json`, the default logger is set to verbose DEBUG mode.
     """
 
     def __init__(self):
