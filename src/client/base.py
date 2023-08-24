@@ -14,5 +14,5 @@ class CommonClient(ABC):
     def infer(self, model_name: str, prompt: str, **model_options):
         pass
 
-    def list_models(self):
+    def list_models(self) -> list:
         pass
