@@ -217,7 +217,7 @@
           "options": {
             "tags": true,
               "async": {
-                "label": "Re-load test columns",
+                "label": "Re-load columns",
                 "action": "listPkeys"
             }
           },

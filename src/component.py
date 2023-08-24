@@ -299,8 +299,12 @@ class Component(ComponentBase):
         Returns:
 
         """
-        input_table = self._get_input_table()
-        return [{"value": c, "label": c} for c in input_table.columns]
+        table = self._get_input_table()
+        with open(table.full_path, 'r') as input_file:
+            reader = csv.DictReader(input_file)
+            headers = reader.fieldnames
+
+        return [{"value": c, "label": c} for c in headers]
 
     @sync_action('testPrompt')
     def test_prompt(self) -> ValidationResult:
