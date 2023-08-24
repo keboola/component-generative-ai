@@ -147,7 +147,7 @@ class Component(ComponentBase):
             self.api_version = self._configuration.authentication.api_version
         self.api_key = self._configuration.authentication.pswd_api_token
 
-        self.model = self._configuration.custom_model or self._configuration.predefined_model
+        self.model = self._configuration.model
         logging.info(f"The component is using the model: {self.model}")
 
         self.model_options = dataclasses.asdict(self._configuration.additional_options)
@@ -362,6 +362,13 @@ class Component(ComponentBase):
         if not prompt:
             raise UserException(f"Prompt template {template} does not exist!")
         return ValidationResult(prompt, MessageType.SUCCESS)
+
+    @sync_action('listModels')
+    def list_models(self):
+        self.init_configuration()
+        client = self.get_client()
+        models = client.list_models()
+        return [{"value": m, "label": m} for m in models]
 
 
 """

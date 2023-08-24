@@ -69,6 +69,11 @@ class OpenAIClient(CommonClient, ABC):
 
         return content, token_usage
 
+    def list_models(self) -> list:
+        r = openai.Model.list()
+        models = [item["id"] for item in r["data"]]
+        return models
+
 
 class AzureOpenAIClient(OpenAIClient):
     def __init__(self, api_token, api_base, deployment_id, api_version):

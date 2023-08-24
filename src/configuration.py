@@ -83,14 +83,12 @@ class PromptTemplates(ConfigurationBase):
 
 @dataclass
 class Configuration(ConfigurationBase):
-    model_type: str
     prompt_templates: Optional[PromptTemplates]
     prompt_options: PromptOptions
     sleep: float
     destination: Destination
     additional_options: AdditionalOptions
     authentication: Authentication
+    model: str
     debug: bool = False
     max_token_spend: int = 0
-    predefined_model: str = ""
-    custom_model: str = ""

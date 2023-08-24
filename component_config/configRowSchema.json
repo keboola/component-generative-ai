@@ -2,57 +2,24 @@
   "type": "object",
   "title": "Component configuration",
   "required": [
-    "model_type",
+    "model",
     "additional_options",
     "prompt_options",
     "destination"
   ],
   "properties": {
-    "predefined_model": {
+    "model": {
       "type": "string",
       "title": "Model",
-      "enum": [
-        "text-davinci-003",
-        "text-davinci-002",
-        "text-curie-001",
-        "text-babbage-001",
-        "text-ada-001",
-        "gpt-4",
-        "gpt-4-0314",
-        "gpt-4-32k",
-        "gpt-4-32k-0314",
-        "gpt-3.5-turbo",
-        "gpt-3.5-turbo-0301"
-      ],
+      "enum": [],
       "description": "The model which will generate the completion. <a href=\"https://beta.openai.com/docs/models\">Learn more.</a>",
-      "propertyOrder": 2,
+      "propertyOrder": 1,
       "options": {
-        "dependencies": {
-          "model_type": "predefined"
+        "async": {
+          "label": "List models",
+          "action": "listModels"
         }
       }
-    },
-    "custom_model": {
-      "type": "string",
-      "title": "Model",
-      "description": "The model which will generate the completion. <a href=\"https://beta.openai.com/docs/models\">Learn more.</a>",
-      "propertyOrder": 2,
-      "options": {
-        "dependencies": {
-          "model_type": "custom"
-        }
-      }
-    },
-    "model_type": {
-      "type": "string",
-      "title": "Model Type",
-      "default": "predefined",
-      "description": "Pick from predefined or enter a custom model.",
-      "enum": [
-        "predefined",
-        "custom"
-      ],
-      "propertyOrder": 1
     },
     "additional_options": {
       "type": "object",
