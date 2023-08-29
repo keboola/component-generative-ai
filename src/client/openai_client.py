@@ -59,8 +59,8 @@ class OpenAIClient(CommonClient, ABC):
     @backoff.on_exception(
         backoff.expo,
         (openai.error.RateLimitError, openai.error.APIError, openai.error.ServiceUnavailableError,
-         openai.error.APIConnectionError),
-        max_tries=3,
+         openai.error.APIConnectionError, openai.error.Timeout),
+        max_tries=5,
         on_giveup=on_giveup
     )
     def infer(self, model_name, inference_function, prompt, **model_options) -> Tuple[Optional[str], Optional[int]]:
