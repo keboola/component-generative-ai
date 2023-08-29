@@ -32,7 +32,6 @@ KEY_API_TOKEN = '#api_token'
 KEY_SLEEP = 'sleep'
 KEY_PROMPT = 'prompt'
 KEY_DESTINATION = 'destination'
-KEY_STORE_RESULTS_ON_FAILURE = 'store_results_on_failure'
 
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
@@ -65,7 +64,6 @@ class Component(ComponentBase):
 
         self.max_token_spend = 0
         self.model_options = None
-        self.store_results_on_failure = None
         self.input_keys = None
         self.sleep_time = None
         self.queue_v2 = None
@@ -116,10 +114,9 @@ class Component(ComponentBase):
         self.write_manifest(out_table)
 
         if self.failed_requests > 0:
-            if self.store_results_on_failure:
-                if self.queue_v2:
-                    self.add_flag_to_manifest()
-                raise UserException(f"Component has failed to process {self.failed_requests} records.")
+            if self.queue_v2:
+                self.add_flag_to_manifest()
+            raise UserException(f"Component has failed to process {self.failed_requests} records.")
         else:
             if self.token_limit_reached:
                 logging.error("Component has been stopped after reaching total token spend limit.")
@@ -139,14 +136,11 @@ class Component(ComponentBase):
 
         self.input_keys = self._get_input_keys(self._configuration.prompt_options.prompt)
 
-        self.queue_v2 = False
-        self.store_results_on_failure = self._configuration.destination.store_results_on_failure
-        if self.store_results_on_failure:
-            self.queue_v2 = 'queuev2' in os.environ.get('KBC_PROJECT_FEATURE_GATES', '')
-            if self.queue_v2:
-                logging.info("Component will try to save results even if some queries fail.")
-            else:
-                logging.warning("Running on old queue, results cannot be stored on failure.")
+        self.queue_v2 = 'queuev2' in os.environ.get('KBC_PROJECT_FEATURE_GATES', '')
+        if self.queue_v2:
+            logging.info("Component will try to save results even if some queries fail.")
+        else:
+            logging.warning("Running on old queue, results cannot be stored on failure.")
 
         self.service = self._configuration.authentication.service
         if self._configuration.authentication.service == "azure_openai":

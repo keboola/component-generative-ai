@@ -189,13 +189,6 @@
           },
           "description": "You can enter multiple columns seperated by commas at once e.g., id, other_id. If a primary key is set, updates can be done on the table by selecting incremental loads. The primary key can consist of multiple columns. The primary key of an existing table cannot be changed.",
           "propertyOrder": 120
-        },
-        "store_results_on_failure": {
-          "type": "boolean",
-          "title": "Store Results on Failure",
-          "format": "checkbox",
-          "description": "If you are running on Queue V2 and set this to true, the component will not quit when it encounters Invalid Request API Error (for example exceeding token limit).",
-          "default": false
         }
       }
     }
