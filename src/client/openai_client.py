@@ -58,7 +58,8 @@ class OpenAIClient(CommonClient, ABC):
 
     @backoff.on_exception(
         backoff.expo,
-        (openai.error.RateLimitError, openai.error.APIError, openai.error.ServiceUnavailableError),
+        (openai.error.RateLimitError, openai.error.APIError, openai.error.ServiceUnavailableError,
+         openai.error.APIConnectionError),
         max_tries=3,
         on_giveup=on_giveup
     )
@@ -71,8 +72,6 @@ class OpenAIClient(CommonClient, ABC):
             return None, 0
         except openai.error.AuthenticationError as e:
             raise AIClientException("Your OpenAI API key is invalid") from e
-        except openai.error.APIConnectionError as e:
-            raise AIClientException(f"API connection Error: {e}") from e
 
         return content, token_usage
 
