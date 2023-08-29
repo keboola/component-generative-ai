@@ -58,8 +58,7 @@ class OpenAIClient(CommonClient, ABC):
 
     @backoff.on_exception(
         backoff.expo,
-        (openai.error.RateLimitError, openai.error.APIError, openai.error.ServiceUnavailableError,
-         openai.error.APIConnectionError, openai.error.Timeout),
+        (openai.error.RateLimitError, openai.error.ServiceUnavailableError, openai.error.APIConnectionError),
         max_tries=5,
         on_giveup=on_giveup
     )
