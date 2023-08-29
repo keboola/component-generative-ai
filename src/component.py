@@ -122,7 +122,7 @@ class Component(ComponentBase):
                 raise UserException(f"Component has failed to process {self.failed_requests} records.")
         else:
             if self.token_limit_reached:
-                logging.error(f"Component has been stopped after reaching total token spend limit.")
+                logging.error("Component has been stopped after reaching total token spend limit.")
             else:
                 logging.info(f"All rows processed, total token usage = {self.tokens_used}")
 
