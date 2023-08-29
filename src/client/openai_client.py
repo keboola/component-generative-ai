@@ -25,14 +25,14 @@ class OpenAIClient(CommonClient, ABC):
         try:
             self.get_chat_completion_result(model_name, "This is a test prompt.")
             return self.get_chat_completion_result
-        except Exception:
+        except openai.error.InvalidRequestError:
             logging.warning(f"Cannot use chat_completion endpoint for model {model_name}, the component will try to use"
                             f"completion_result endpoint.")
 
         try:
             self.get_completion_result(model_name, "This is a test prompt.")
             return self.get_completion_result
-        except Exception:
+        except openai.error.InvalidRequestError:
             raise AIClientException(f"The component is unable to use chat_completion and completion endpoints with "
                                     f"model {model_name}.")
 
