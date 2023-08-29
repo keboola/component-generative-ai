@@ -50,7 +50,6 @@ class Destination(ConfigurationBase):
     incremental_load: bool
     output_table_name: str
     primary_keys_array: list[str]
-    store_results_on_failure: bool
 
 
 @dataclass

@@ -14,6 +14,7 @@ from itertools import islice
 
 
 import pystache as pystache
+import requests.exceptions
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.sync_actions import ValidationResult, MessageType
 from keboola.component.dao import TableDefinition
@@ -31,7 +32,6 @@ KEY_API_TOKEN = '#api_token'
 KEY_SLEEP = 'sleep'
 KEY_PROMPT = 'prompt'
 KEY_DESTINATION = 'destination'
-KEY_STORE_RESULTS_ON_FAILURE = 'store_results_on_failure'
 
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
@@ -50,7 +50,7 @@ class Component(ComponentBase):
         For easier debugging the data folder is picked up by default from `../data` path,
         relative to working directory.
 
-        If `debug` parameter is present in the `config.json`, the default logger is set to verbose DEBUG mode.
+        If `debug` parameter is present in the `azure_config.json`, the default logger is set to verbose DEBUG mode.
     """
 
     def __init__(self):
@@ -62,9 +62,8 @@ class Component(ComponentBase):
         self.api_base = None
         self.api_version = None
 
-        self.max_token_spend = None
+        self.max_token_spend = 0
         self.model_options = None
-        self.store_results_on_failure = None
         self.input_keys = None
         self.sleep_time = None
         self.queue_v2 = None
@@ -72,6 +71,7 @@ class Component(ComponentBase):
         self._configuration = None
         self.failed_requests = 0
         self.tokens_used = 0
+        self.token_limit_reached = False
 
     def run(self):
         """
@@ -80,6 +80,7 @@ class Component(ComponentBase):
         self.init_configuration()
 
         client = self.get_client()
+        inference_function = client.get_inference_function(self.model)
 
         input_table, out_table = self.prepare_tables()
 
@@ -92,7 +93,8 @@ class Component(ComponentBase):
                     prompt = self._build_prompt(self.input_keys, row)
 
                     try:
-                        result, token_usage = client.infer(self.model, prompt, **self.model_options)
+                        result, token_usage = client.infer(self.model, inference_function, prompt,
+                                                           **self.model_options)
                         self.tokens_used += token_usage
                     except AIClientException as e:
                         raise UserException(f"The component failed to process request. {e}") from e
@@ -103,6 +105,7 @@ class Component(ComponentBase):
                         self.failed_requests += 1
 
                     if self.max_token_spend != 0 and self.tokens_used >= self.max_token_spend:
+                        self.token_limit_reached = True
                         logging.error(f"The token spend limit of {self.max_token_spend} has been reached.")
                         break
 
@@ -111,12 +114,14 @@ class Component(ComponentBase):
         self.write_manifest(out_table)
 
         if self.failed_requests > 0:
-            if self.store_results_on_failure:
-                if self.queue_v2:
-                    self.add_flag_to_manifest()
-                raise UserException(f"Component has failed to process {self.failed_requests} records.")
+            if self.queue_v2:
+                self.add_flag_to_manifest()
+            raise UserException(f"Component has failed to process {self.failed_requests} records.")
         else:
-            logging.info(f"All rows processed, total token usage = {self.tokens_used}")
+            if self.token_limit_reached:
+                logging.error("Component has been stopped after reaching total token spend limit.")
+            else:
+                logging.info(f"All rows processed, total token usage = {self.tokens_used}")
 
     def init_configuration(self):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
@@ -131,14 +136,11 @@ class Component(ComponentBase):
 
         self.input_keys = self._get_input_keys(self._configuration.prompt_options.prompt)
 
-        self.queue_v2 = False
-        self.store_results_on_failure = self._configuration.destination.store_results_on_failure
-        if self.store_results_on_failure:
-            self.queue_v2 = 'queuev2' in os.environ.get('KBC_PROJECT_FEATURE_GATES', '')
-            if self.queue_v2:
-                logging.info("Component will try to save results even if some queries fail.")
-            else:
-                logging.warning("Running on old queue, results cannot be stored on failure.")
+        self.queue_v2 = 'queuev2' in os.environ.get('KBC_PROJECT_FEATURE_GATES', '')
+        if self.queue_v2:
+            logging.info("Component will try to save results even if some queries fail.")
+        else:
+            logging.warning("Running on old queue, results cannot be stored on failure.")
 
         self.service = self._configuration.authentication.service
         if self._configuration.authentication.service == "azure_openai":
@@ -251,8 +253,12 @@ class Component(ComponentBase):
         return table
 
     def _get_table_preview(self, table_id: str, limit: int = None) -> list[dict]:
+        # TODO: Properly handle maximum columns
         tables = Tables(self._get_kbc_root_url(), self._get_storage_token())
-        preview = tables.preview(table_id)
+        try:
+            preview = tables.preview(table_id)
+        except requests.exceptions.HTTPError:
+            raise UserException("Tables of maximum of 30 columns are supported by preview function.")
 
         data = []
         csv_reader = csv.DictReader(StringIO(preview))
@@ -317,6 +323,7 @@ class Component(ComponentBase):
         self.init_configuration()
 
         client = self.get_client()
+        inference_function = client.get_inference_function(self.model)
 
         table_id = self._get_storage_source()
         table_preview = self._get_table_preview(table_id, limit=PREVIEW_LIMIT)
@@ -332,7 +339,7 @@ class Component(ComponentBase):
         results = []
         for row in table_preview:
             prompt = self._build_prompt(self.input_keys, row)
-            result, token_usage = client.infer(self.model, prompt, **self.model_options)
+            result, token_usage = client.infer(self.model, inference_function, prompt, **self.model_options)
             self.tokens_used += token_usage
 
             if result:

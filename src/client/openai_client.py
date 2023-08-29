@@ -7,8 +7,6 @@ from typing import Optional, Tuple, Callable
 
 from .base import CommonClient, AIClientException
 
-OPENAI_CHAT_MODELS = ["gpt-4", "gpt-4-0314", "gpt-4-32k", "gpt-4-32k-0314", "gpt-3.5-turbo", "gpt-3.5-turbo-0301"]
-
 
 def on_giveup(details: dict):
     raise AIClientException(details.get("exception"))
@@ -24,9 +22,19 @@ class OpenAIClient(CommonClient, ABC):
 
     def get_inference_function(self, model_name: str) -> Callable:
         """Returns appropriate inference function (either Completion or ChatCompletion)."""
-        if model_name in OPENAI_CHAT_MODELS:
+        try:
+            self.get_chat_completion_result(model_name, "This is a test prompt.")
             return self.get_chat_completion_result
-        return self.get_completion_result
+        except openai.error.InvalidRequestError:
+            logging.warning(f"Cannot use chat_completion endpoint for model {model_name}, the component will try to use"
+                            f"completion_result endpoint.")
+
+        try:
+            self.get_completion_result(model_name, "This is a test prompt.")
+            return self.get_completion_result
+        except openai.error.InvalidRequestError:
+            raise AIClientException(f"The component is unable to use chat_completion and completion endpoints with "
+                                    f"model {model_name}.")
 
     @staticmethod
     def get_completion_result(model_name: str, prompt: str, **model_options)\
@@ -50,12 +58,11 @@ class OpenAIClient(CommonClient, ABC):
 
     @backoff.on_exception(
         backoff.expo,
-        (openai.error.RateLimitError, openai.error.APIError, openai.error.ServiceUnavailableError),
-        max_tries=3,
+        (openai.error.RateLimitError, openai.error.ServiceUnavailableError, openai.error.APIConnectionError),
+        max_tries=5,
         on_giveup=on_giveup
     )
-    def infer(self, model_name, prompt, **model_options) -> Tuple[Optional[str], Optional[int]]:
-        inference_function = self.get_inference_function(model_name)
+    def infer(self, model_name, inference_function, prompt, **model_options) -> Tuple[Optional[str], Optional[int]]:
 
         try:
             content, token_usage = inference_function(model_name, prompt, **model_options)
@@ -64,8 +71,6 @@ class OpenAIClient(CommonClient, ABC):
             return None, 0
         except openai.error.AuthenticationError as e:
             raise AIClientException("Your OpenAI API key is invalid") from e
-        except openai.error.APIConnectionError as e:
-            raise AIClientException(f"API connection Error: {e}") from e
 
         return content, token_usage
 
