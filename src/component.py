@@ -14,6 +14,7 @@ from itertools import islice
 
 
 import pystache as pystache
+import requests.exceptions
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.sync_actions import ValidationResult, MessageType
 from keboola.component.dao import TableDefinition
@@ -50,7 +51,7 @@ class Component(ComponentBase):
         For easier debugging the data folder is picked up by default from `../data` path,
         relative to working directory.
 
-        If `debug` parameter is present in the `config.json`, the default logger is set to verbose DEBUG mode.
+        If `debug` parameter is present in the `azure_config.json`, the default logger is set to verbose DEBUG mode.
     """
 
     def __init__(self):
@@ -72,6 +73,7 @@ class Component(ComponentBase):
         self._configuration = None
         self.failed_requests = 0
         self.tokens_used = 0
+        self.token_limit_reached = False
 
     def run(self):
         """
@@ -80,6 +82,7 @@ class Component(ComponentBase):
         self.init_configuration()
 
         client = self.get_client()
+        inference_function = client.get_inference_function(self.model)
 
         input_table, out_table = self.prepare_tables()
 
@@ -92,7 +95,8 @@ class Component(ComponentBase):
                     prompt = self._build_prompt(self.input_keys, row)
 
                     try:
-                        result, token_usage = client.infer(self.model, prompt, **self.model_options)
+                        result, token_usage = client.infer(self.model, inference_function, prompt,
+                                                           **self.model_options)
                         self.tokens_used += token_usage
                     except AIClientException as e:
                         raise UserException(f"The component failed to process request. {e}") from e
@@ -103,6 +107,7 @@ class Component(ComponentBase):
                         self.failed_requests += 1
 
                     if self.max_token_spend != 0 and self.tokens_used >= self.max_token_spend:
+                        self.token_limit_reached = True
                         logging.error(f"The token spend limit of {self.max_token_spend} has been reached.")
                         break
 
@@ -116,7 +121,10 @@ class Component(ComponentBase):
                     self.add_flag_to_manifest()
                 raise UserException(f"Component has failed to process {self.failed_requests} records.")
         else:
-            logging.info(f"All rows processed, total token usage = {self.tokens_used}")
+            if self.token_limit_reached:
+                logging.error(f"Component has been stopped after reaching total token spend limit.")
+            else:
+                logging.info(f"All rows processed, total token usage = {self.tokens_used}")
 
     def init_configuration(self):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
@@ -252,7 +260,10 @@ class Component(ComponentBase):
 
     def _get_table_preview(self, table_id: str, limit: int = None) -> list[dict]:
         tables = Tables(self._get_kbc_root_url(), self._get_storage_token())
-        preview = tables.preview(table_id)
+        try:
+            preview = tables.preview(table_id)
+        except requests.exceptions.HTTPError:
+            raise UserException(f"Unable to get table preview for table {table_id}. Bad storage token?")
 
         data = []
         csv_reader = csv.DictReader(StringIO(preview))
@@ -317,6 +328,7 @@ class Component(ComponentBase):
         self.init_configuration()
 
         client = self.get_client()
+        inference_function = client.get_inference_function(self.model)
 
         table_id = self._get_storage_source()
         table_preview = self._get_table_preview(table_id, limit=PREVIEW_LIMIT)
@@ -332,7 +344,7 @@ class Component(ComponentBase):
         results = []
         for row in table_preview:
             prompt = self._build_prompt(self.input_keys, row)
-            result, token_usage = client.infer(self.model, prompt, **self.model_options)
+            result, token_usage = client.infer(self.model, inference_function, prompt, **self.model_options)
             self.tokens_used += token_usage
 
             if result:
