@@ -63,7 +63,7 @@ class Component(ComponentBase):
         self.api_base = None
         self.api_version = None
 
-        self.max_token_spend = None
+        self.max_token_spend = 0
         self.model_options = None
         self.store_results_on_failure = None
         self.input_keys = None
@@ -259,11 +259,12 @@ class Component(ComponentBase):
         return table
 
     def _get_table_preview(self, table_id: str, limit: int = None) -> list[dict]:
+        # TODO: Properly handle maximum columns
         tables = Tables(self._get_kbc_root_url(), self._get_storage_token())
         try:
             preview = tables.preview(table_id)
         except requests.exceptions.HTTPError:
-            raise UserException(f"Unable to get table preview for table {table_id}. Bad storage token?")
+            raise UserException("Tables of maximum of 30 columns are supported by preview function.")
 
         data = []
         csv_reader = csv.DictReader(StringIO(preview))
