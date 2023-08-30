@@ -59,6 +59,7 @@ class AdditionalOptions(ConfigurationBase):
     temperature: float
     presence_penalty: float
     frequency_penalty: float
+    request_timeout: int
 
 
 @dataclass

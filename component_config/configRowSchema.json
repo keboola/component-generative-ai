@@ -65,6 +65,13 @@
           "default": 0,
           "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.",
           "propertyOrder": 30
+        },
+        "request_timeout": {
+          "type": "number",
+          "title": "Request Timeout",
+          "default": 30,
+          "description": "Seconds to wait for API to respond. This is a workaround for OpenAI API not responding sometimes.",
+          "propertyOrder": 40
         }
       }
     },
