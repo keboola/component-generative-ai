@@ -1,4 +1,9 @@
 {
-  "timestamp_from_date": "Create a timestamp in \"YYYY-MM-DD HH:MM:SS\" format from the following date: \n\n\"\"\"\n[[INPUT_COLUMN]]\n\"\"\"",
-  "remove_diacritics": "Remove diacritics from the following text: \\n\\n\\\"\\\"\\\"\\n[[INPUT_COLUMN]]\\n\\\"\\\"\\\"\""
+  "timestamp_from_date": "Convert the date [[INPUT_COLUMN]] into a timestamp. Provide the result in the following format: YYYY-MM-DD HH:MM:SS. Ensure the format is strictly followed.",
+  "remove_diacritics": "Carefully remove diacritics from the text: [[INPUT_COLUMN]]. Ensure the original meaning and words remain unchanged.",
+  "add_diacritics": "Thoughtfully add appropriate diacritics to the text: [[INPUT_COLUMN]]. Ensure the diacritics match the context of the text.",
+  "extract_topics": "Please think carefully and extract main topics from the text: [[INPUT_COLUMN]]. Return them as a JSON array. Only include topics you're confident about.",
+  "sentiment_scoring": "Score the sentiment of the text [[INPUT_COLUMN]] on a scale of -1.00 (very negative) to 1.00 (very positive). For example, 'I love this!' should be close to 1.00 and 'I hate this.' should be close to -1.00. Ensure the score accurately reflects the sentiment.",
+  "text_shortener": "Shorten the text [[INPUT_COLUMN]] to a maximum of 140 characters. Provide the shortened version and ensure it maintains the core message of the original text. The result must not exceed 140 characters.",
+  "grammar_correction": "Correct the grammar of the text [[INPUT_COLUMN]]. It's crucial not to change the overall meaning or add any extra information. Ensure the correction is precise and coherent."
 }
