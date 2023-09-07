@@ -252,13 +252,12 @@ class Component(ComponentBase):
             table += "| " + " | ".join(row_values) + " |\n"
         return table
 
-    def _get_table_preview(self, table_id: str, limit: int = None) -> list[dict]:
-        # TODO: Properly handle maximum columns
+    def _get_table_preview(self, table_id: str, columns: list[str] = None, limit: int = None) -> list[dict]:
         tables = Tables(self._get_kbc_root_url(), self._get_storage_token())
         try:
-            preview = tables.preview(table_id)
-        except requests.exceptions.HTTPError:
-            raise UserException("Tables of maximum of 30 columns are supported by preview function.")
+            preview = tables.preview(table_id, columns=columns)
+        except requests.exceptions.HTTPError as e:
+            raise UserException(f"Unable to retrieve table preview: {e}")
 
         data = []
         csv_reader = csv.DictReader(StringIO(preview))
@@ -300,18 +299,18 @@ class Component(ComponentBase):
     @sync_action('listPkeys')
     def list_table_columns(self):
         """
-        Sync action to fill the UI element of primary keys.
+        Sync action to fill the UI element for primary keys selection.
 
         Returns:
 
         """
         self.init_configuration()
-        table_id = self._get_storage_source()
-        table_preview = self._get_table_preview(table_id, limit=PREVIEW_LIMIT)
+        input_tables = self.get_input_tables_definitions()
+        if not input_tables:
+            raise UserException("No input table mapped, cannot list columns.")
+        table = input_tables[0]
 
-        headers = list(table_preview[0].keys())
-
-        return [{"value": c, "label": c} for c in headers]
+        return [{"value": c, "label": c} for c in table.columns]
 
     @sync_action('testPrompt')
     def test_prompt(self) -> ValidationResult:
@@ -326,7 +325,7 @@ class Component(ComponentBase):
         inference_function = client.get_inference_function(self.model)
 
         table_id = self._get_storage_source()
-        table_preview = self._get_table_preview(table_id, limit=PREVIEW_LIMIT)
+        table_preview = self._get_table_preview(table_id, columns=self.input_keys, limit=PREVIEW_LIMIT)
 
         preview_size = len(table_preview)
         table_size = self._get_table_size(table_id)
