@@ -305,7 +305,7 @@ class Component(ComponentBase):
 
         """
         self.init_configuration()
-        tables = self.get_input_tables_definitions()
+        tables = self.get_input_tables_definitions(orphaned_manifests=True)
         if not tables:
             raise UserException("No input table specified. Please provide one input table in the input mapping!")
         table = tables[0]
