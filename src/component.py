@@ -325,6 +325,10 @@ class Component(ComponentBase):
         inference_function = client.get_inference_function(self.model)
 
         table_id = self._get_storage_source()
+        if len(self.input_keys) > 30:
+            raise UserException(f"Test prompt is available only for up to 30 placeholders. "
+                                f"You have {len(self.input_keys)} placeholders.")
+
         table_preview = self._get_table_preview(table_id, columns=self.input_keys, limit=PREVIEW_LIMIT)
 
         preview_size = len(table_preview)
