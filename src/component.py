@@ -305,13 +305,10 @@ class Component(ComponentBase):
 
         """
         self.init_configuration()
-        input_tables = self.get_input_tables_definitions()
-        if not input_tables:
-            input_tables = self.configuration.tables_input_mapping
-            table = self.get_input_table_definition_by_name(input_tables[0])
-        else:
-            table = input_tables[0].columns
-
+        tables = self.get_input_tables_definitions()
+        if not tables:
+            raise UserException("No input table specified. Please provide one input table in the input mapping!")
+        table = tables[0]
         return [{"value": c, "label": c} for c in table.columns]
 
     @sync_action('testPrompt')
