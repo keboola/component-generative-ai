@@ -307,8 +307,10 @@ class Component(ComponentBase):
         self.init_configuration()
         input_tables = self.get_input_tables_definitions()
         if not input_tables:
-            raise UserException("No input table mapped, cannot list columns.")
-        table = input_tables[0]
+            input_tables = self.configuration.tables_input_mapping
+            table = self.get_input_table_definition_by_name(input_tables[0])
+        else:
+            table = input_tables[0].columns
 
         return [{"value": c, "label": c} for c in table.columns]
 
