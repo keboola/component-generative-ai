@@ -20,6 +20,7 @@ from keboola.component.sync_actions import ValidationResult, MessageType
 from keboola.component.dao import TableDefinition
 from keboola.component.exceptions import UserException
 from kbcstorage.tables import Tables
+from kbcstorage.client import Client
 
 
 from configuration import Configuration
@@ -296,6 +297,14 @@ class Component(ComponentBase):
             logging.warning(f"Max token spend has been set to {self.max_token_spend}. If the component reaches "
                             f"this limit, it will exit.")
 
+    def _get_table_columns(self, table_id: str) -> list:
+        client = Client(self._get_kbc_root_url(), self._get_storage_token())
+        table_detail = client.tables.detail(table_id)
+        columns = table_detail.get("columns")
+        if not columns:
+            raise UserException(f"Cannot fetch list of columns for table {table_id}")
+        return columns
+
     @sync_action('listPkeys')
     def list_table_columns(self):
         """
@@ -305,11 +314,9 @@ class Component(ComponentBase):
 
         """
         self.init_configuration()
-        tables = self.get_input_tables_definitions(orphaned_manifests=True)
-        if not tables:
-            raise UserException("No input table specified. Please provide one input table in the input mapping!")
-        table = tables[0]
-        return [{"value": c, "label": c} for c in table.columns]
+        table_id = self._get_storage_source()
+        columns = self._get_table_columns(table_id)
+        return [{"value": c, "label": c} for c in columns]
 
     @sync_action('testPrompt')
     def test_prompt(self) -> ValidationResult:
