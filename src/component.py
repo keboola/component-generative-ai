@@ -20,6 +20,7 @@ from keboola.component.sync_actions import ValidationResult, MessageType
 from keboola.component.dao import TableDefinition
 from keboola.component.exceptions import UserException
 from kbcstorage.tables import Tables
+from kbcstorage.client import Client
 
 
 from configuration import Configuration
@@ -252,13 +253,12 @@ class Component(ComponentBase):
             table += "| " + " | ".join(row_values) + " |\n"
         return table
 
-    def _get_table_preview(self, table_id: str, limit: int = None) -> list[dict]:
-        # TODO: Properly handle maximum columns
+    def _get_table_preview(self, table_id: str, columns: list[str] = None, limit: int = None) -> list[dict]:
         tables = Tables(self._get_kbc_root_url(), self._get_storage_token())
         try:
-            preview = tables.preview(table_id)
-        except requests.exceptions.HTTPError:
-            raise UserException("Tables of maximum of 30 columns are supported by preview function.")
+            preview = tables.preview(table_id, columns=columns)
+        except requests.exceptions.HTTPError as e:
+            raise UserException(f"Unable to retrieve table preview: {e}")
 
         data = []
         csv_reader = csv.DictReader(StringIO(preview))
@@ -297,21 +297,26 @@ class Component(ComponentBase):
             logging.warning(f"Max token spend has been set to {self.max_token_spend}. If the component reaches "
                             f"this limit, it will exit.")
 
+    def _get_table_columns(self, table_id: str) -> list:
+        client = Client(self._get_kbc_root_url(), self._get_storage_token())
+        table_detail = client.tables.detail(table_id)
+        columns = table_detail.get("columns")
+        if not columns:
+            raise UserException(f"Cannot fetch list of columns for table {table_id}")
+        return columns
+
     @sync_action('listPkeys')
     def list_table_columns(self):
         """
-        Sync action to fill the UI element of primary keys.
+        Sync action to fill the UI element for primary keys selection.
 
         Returns:
 
         """
         self.init_configuration()
         table_id = self._get_storage_source()
-        table_preview = self._get_table_preview(table_id, limit=PREVIEW_LIMIT)
-
-        headers = list(table_preview[0].keys())
-
-        return [{"value": c, "label": c} for c in headers]
+        columns = self._get_table_columns(table_id)
+        return [{"value": c, "label": c} for c in columns]
 
     @sync_action('testPrompt')
     def test_prompt(self) -> ValidationResult:
@@ -326,7 +331,11 @@ class Component(ComponentBase):
         inference_function = client.get_inference_function(self.model)
 
         table_id = self._get_storage_source()
-        table_preview = self._get_table_preview(table_id, limit=PREVIEW_LIMIT)
+        if len(self.input_keys) > 30:
+            raise UserException(f"Test prompt is available only for up to 30 placeholders. "
+                                f"You have {len(self.input_keys)} placeholders.")
+
+        table_preview = self._get_table_preview(table_id, columns=self.input_keys, limit=PREVIEW_LIMIT)
 
         preview_size = len(table_preview)
         table_size = self._get_table_size(table_id)
