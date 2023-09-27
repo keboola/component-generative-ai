@@ -23,10 +23,9 @@ You can find out how to get your API key, API Base and Deployment ID in [Microso
 - API Key `#api_token`
 - API Base `api_base`
 - Deployment ID `deployment_id`
-- API Version `api_version`
+- API Version `api_version` API version use to call Completions endpoint with. You can see the list of supported API version in [Microsoft Azure documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/reference?WT.mc_id=AZ-MVP-5004796#completions)
 
 - Prompt `prompt` The prompt and data input pattern. Refer to input column using placeholder [[INPUT_COLUMN]]. The input table must contain the referenced column.
-- Model type `model_type` ["predefined", "custom"]
 - Incremental Load `incremental load` If incremental load is turned on, the table will be updated instead of rewritten. Tables with a primary key will have rows updated, tables without a primary key will have rows appended.
 - Output Table name `output_table_name` Name of the table stored in Storage.
 - Primary Keys array `primary_keys_array` You can enter multiple columns separated by commas at once e.g. id, other_id. If a primary key is set, updates can be done on the table by selecting incremental loads. The primary key can consist of multiple columns. The primary key of an existing table cannot be changed.
