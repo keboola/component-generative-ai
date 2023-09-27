@@ -16,12 +16,14 @@ This component enables you to query OpenAI, Azure OpenAI, and Llama 2 (coming so
 
 #### AI Service Provider: Azure OpenAI
 
-For information on retrieving your API key, API Base, and Deployment ID, refer to the [Microsoft Azure documentation](https://learn.microsoft.com/cs-cz/azure/ai-services/openai/quickstart?tabs=command-line&pivots=programming-language-python#retrieve-key-and-endpoint).
-
 - **API Key (`#api_token`)**
 - **API Base (`api_base`)**
 - **Deployment ID (`deployment_id`)**
 - **API Version (`api_version`):** API version used to call the Completions endpoint. Check the list of supported API versions in the [Microsoft Azure documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/reference?WT.mc_id=AZ-MVP-5004796#completions).
+
+For information on retrieving your API key, API Base, and Deployment ID, refer to the [Microsoft Azure documentation](https://learn.microsoft.com/cs-cz/azure/ai-services/openai/quickstart?tabs=command-line&pivots=programming-language-python#retrieve-key-and-endpoint).
+
+- **Model (`prompt`)** You can use the sync action to load available models for your account.
 - **Prompt (`prompt`):** The prompt and data input pattern. Use the placeholder [[INPUT_COLUMN]] to refer to the input column. The input table must contain the referenced column.
 - **Incremental Load (`incremental load`):** If enabled, the table will update rather than be overwritten. Tables with primary keys will update rows, whereas those without a primary key will append rows.
 - **Output Table Name (`output_table_name`)**
@@ -35,10 +37,11 @@ For information on retrieving your API key, API Base, and Deployment ID, refer t
 - **Top P (`top_p`):** Nucleus sampling, where only tokens with top_p probability mass are considered. For instance, 0.1 means only the top 10% probability mass tokens are evaluated.
 - **Frequency Penalty (`frequency_penalty`):** A number between -2.0 and 2.0. Positive values penalize frequently occurring tokens in the current text, reducing repetition.
 - **Presence Penalty (`presence_penalty`):** A number between -2.0 and 2.0. Positive values penalize tokens already present in the text, encouraging diverse topics.
+- **Request Timeout (`request_timeout`):** Seconds to wait for API to respond. This is a workaround for OpenAI API not responding sometimes.
 
 ---
 
-### Component Configuration
+### Component Configuration Example
 
 **Generic configuration**
 
@@ -92,7 +95,7 @@ the `docker-compose.yml` file:
 Clone this repository, init the workspace and run the component with following command:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-git clone git@bitbucket.org:kds_consulting_team/kds_consulting_team/kds-team.app-open-ai.git kds-team.app-open-ai
+git clone git@bitbucket.org:kds_consulting_team/kds_consulting_team/kds-team.generative-ai.git kds-team.generative-ai
 cd kds-team.app-open-ai
 docker-compose build
 docker-compose run --rm dev
