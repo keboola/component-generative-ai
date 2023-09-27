@@ -83,7 +83,6 @@ class PromptTemplates(ConfigurationBase):
 
 @dataclass
 class Configuration(ConfigurationBase):
-    sleep: float
     destination: Destination
     additional_options: AdditionalOptions
     authentication: Authentication
