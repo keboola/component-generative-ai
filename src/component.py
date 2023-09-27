@@ -244,12 +244,14 @@ class Component(ComponentBase):
     def create_markdown_table(data):
         if not data:
             return ""
-        headers = list(data[0].keys())
-        table = "| " + " | ".join(headers) + " |\n"
-        table += "| " + " | ".join(["---"] * len(headers)) + " |\n"
-        for row in data:
-            row_values = [str(row[header]).replace("\n", " ") for header in headers]
-            table += "| " + " | ".join(row_values) + " |\n"
+
+        table = "| " + RESULT_COLUMN_NAME + " |\n"
+        table += "| --- |\n"
+
+        for value in data:
+            value = str(value).replace("\n", " ")
+            table += "| " + value + " |\n"
+
         return table
 
     def _get_table_preview(self, table_id: str, columns: list[str] = None, limit: int = None) -> list[dict]:
