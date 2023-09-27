@@ -88,7 +88,7 @@ class Component(ComponentBase):
         with open(input_table.full_path, 'r') as input_file:
             reader = csv.DictReader(input_file)
             with open(out_table.full_path, 'w+') as out_file:
-                writer = csv.DictWriter(out_file, fieldnames=out_table.primary_key + [RESULT_COLUMN_NAME])
+                writer = csv.DictWriter(out_file, fieldnames=out_table.columns)
                 writer.writeheader()
                 for row in reader:
                     prompt = self._build_prompt(self.input_keys, row)
@@ -101,7 +101,7 @@ class Component(ComponentBase):
                         raise UserException(f"The component failed to process request. {e}") from e
 
                     if result:
-                        writer.writerow(self._build_output_row(out_table.primary_key, row, result))
+                        writer.writerow(self._build_output_row(row, result))
                     else:
                         self.failed_requests += 1
 
@@ -168,7 +168,7 @@ class Component(ComponentBase):
         if missing_keys := [key for key in self.input_keys if key not in input_table.columns]:
             raise UserException(f'The columns "{missing_keys}" need to be present in the input data!')
 
-        out_table = self._build_out_table()
+        out_table = self._build_out_table(input_table)
 
         if missing_keys := [t for t in out_table.primary_key if t not in input_table.columns]:
             raise UserException(f'Some specified primary keys are not in the input table: {missing_keys}')
@@ -182,14 +182,12 @@ class Component(ComponentBase):
         return sleep_time
 
     @staticmethod
-    def _build_output_row(primary_key: List[str], input_row: dict, result: str):
-        row = dict()
-        for k in primary_key:
-            row[k] = input_row[k]
-        row['result_value'] = result.strip()
-        return row
+    def _build_output_row(input_row: dict, result: str):
+        output_row = input_row.copy()
+        output_row[RESULT_COLUMN_NAME] = result.strip()
+        return output_row
 
-    def _build_out_table(self) -> TableDefinition:
+    def _build_out_table(self, input_table: TableDefinition) -> TableDefinition:
         destination_config = self.configuration.parameters['destination']
 
         if not (out_table_name := destination_config.get("output_table_name")):
@@ -197,10 +195,11 @@ class Component(ComponentBase):
         else:
             out_table_name = f"{out_table_name}.csv"
 
+        columns = input_table.columns + [RESULT_COLUMN_NAME]
         primary_key = destination_config.get('primary_keys_array', [])
 
         incremental_load = destination_config.get('incremental_load', False)
-        return self.create_out_table_definition(out_table_name, primary_key=primary_key,
+        return self.create_out_table_definition(out_table_name, columns=columns, primary_key=primary_key,
                                                 incremental=incremental_load)
 
     @staticmethod
@@ -340,8 +339,6 @@ class Component(ComponentBase):
         preview_size = len(table_preview)
         table_size = self._get_table_size(table_id)
 
-        primary_key = self._configuration.destination.primary_keys_array
-
         if missing_keys := [key for key in self.input_keys if key not in table_preview[0]]:
             raise UserException(f'The columns "{missing_keys}" need to be present in the input data!')
 
@@ -352,7 +349,9 @@ class Component(ComponentBase):
             self.tokens_used += token_usage
 
             if result:
-                results.append(self._build_output_row(primary_key, row, result))
+                output_row = self._build_output_row(row, result)
+                output = output_row.get(RESULT_COLUMN_NAME, "")
+                results.append(output)
 
         if results:
             estimated_token_usage = self.estimate_token_usage(preview_size, table_size)
