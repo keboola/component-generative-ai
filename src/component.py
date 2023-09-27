@@ -5,7 +5,6 @@ Template Component main class.
 import csv
 import dataclasses
 import logging
-import time
 from typing import List
 import json
 import os
@@ -30,7 +29,6 @@ from client.base import AIClientException
 # configuration variables
 RESULT_COLUMN_NAME = 'result_value'
 KEY_API_TOKEN = '#api_token'
-KEY_SLEEP = 'sleep'
 KEY_PROMPT = 'prompt'
 KEY_DESTINATION = 'destination'
 
@@ -66,7 +64,6 @@ class Component(ComponentBase):
         self.max_token_spend = 0
         self.model_options = None
         self.input_keys = None
-        self.sleep_time = None
         self.queue_v2 = None
         self.model = None
         self._configuration = None
@@ -110,8 +107,6 @@ class Component(ComponentBase):
                         logging.error(f"The token spend limit of {self.max_token_spend} has been reached.")
                         break
 
-                    time.sleep(self.sleep_time)
-
         self.write_manifest(out_table)
 
         if self.failed_requests > 0:
@@ -127,8 +122,6 @@ class Component(ComponentBase):
     def init_configuration(self):
         self.validate_configuration_parameters(Configuration.get_dataclass_required_parameters())
         self._configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
-
-        self.sleep_time = self._configuration.sleep
 
         if self._configuration.max_token_spend > 0:
             self.max_token_spend = self._configuration.max_token_spend
@@ -174,12 +167,6 @@ class Component(ComponentBase):
             raise UserException(f'Some specified primary keys are not in the input table: {missing_keys}')
 
         return input_table, out_table
-
-    @staticmethod
-    def _get_sleep(params):
-        sleep_time = float(params.get(KEY_SLEEP, 0))
-        logging.info(f"Sleep time set to {sleep_time} seconds." if sleep_time else "Sleep time not set.")
-        return sleep_time
 
     @staticmethod
     def _build_output_row(input_row: dict, result: str):
