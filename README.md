@@ -14,9 +14,11 @@ Accepts following parameters:
 
 
 AI Service Provider **OpenAI**
+
 - API Key `#api_token` You can get your API key in [OpenAI platform settings](https://platform.openai.com/account/api-keys)
 
 AI Service Provider **Azure OpenAI**
+
 You can find out how to get your API key, API Base and Deployment ID in [Microsoft Azure documentation](https://learn.microsoft.com/cs-cz/azure/ai-services/openai/quickstart?tabs=command-line&pivots=programming-language-python#retrieve-key-and-endpoint)
 - API Key `#api_token`
 - API Base `api_base`
