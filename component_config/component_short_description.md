@@ -1,1 +1,1 @@
-Generative AI
+Query OpenAI and Azure OpenAI services with data provided from your KBC project.
