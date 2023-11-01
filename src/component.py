@@ -35,7 +35,6 @@ KEY_DESTINATION = 'destination'
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
 REQUIRED_PARAMETERS = [KEY_API_TOKEN, KEY_PROMPT, KEY_DESTINATION]
-REQUIRED_IMAGE_PARS = []
 
 PREVIEW_LIMIT = 5
 PROMPT_TEMPLATES = 'templates/prompts.json'

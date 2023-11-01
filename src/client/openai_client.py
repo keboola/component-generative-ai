@@ -20,19 +20,24 @@ class OpenAIClient(CommonClient, ABC):
     def __init__(self, api_token):
         openai.api_key = api_token
 
+    @backoff.on_exception(
+        backoff.expo,
+        openai.error.OpenAIError,
+        max_tries=3,
+        on_giveup=on_giveup
+    )
     def get_inference_function(self, model_name: str) -> Callable:
         """Returns appropriate inference function (either Completion or ChatCompletion)."""
         try:
-            self.get_chat_completion_result(model_name, "This is a test prompt.")
+            self.get_chat_completion_result(model_name, prompt="This is a test prompt.", request_timeout=10)
             return self.get_chat_completion_result
-        except openai.error.InvalidRequestError:
+        except openai.error.OpenAIError:
             logging.warning(f"Cannot use chat_completion endpoint for model {model_name}, the component will try to use"
                             f"completion_result endpoint.")
-
         try:
-            self.get_completion_result(model_name, "This is a test prompt.")
+            self.get_completion_result(model_name, "This is a test prompt.", request_timeout=10)
             return self.get_completion_result
-        except openai.error.InvalidRequestError:
+        except openai.error.OpenAIError:
             raise AIClientException(f"The component is unable to use chat_completion and completion endpoints with "
                                     f"model {model_name}.")
 
@@ -58,8 +63,7 @@ class OpenAIClient(CommonClient, ABC):
 
     @backoff.on_exception(
         backoff.expo,
-        (openai.error.RateLimitError, openai.error.ServiceUnavailableError, openai.error.APIConnectionError,
-         openai.error.OpenAIError),
+        openai.error.OpenAIError,
         max_tries=5,
         on_giveup=on_giveup
     )
