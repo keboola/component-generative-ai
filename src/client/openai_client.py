@@ -30,7 +30,7 @@ class OpenAIClient(CommonClient, ABC):
         """Returns appropriate inference function (either Completion or ChatCompletion)."""
         try:
             self.get_chat_completion_result(model_name, prompt="This is a test prompt.", request_timeout=60,
-                                            max_tokens=30)
+                                            max_tokens=20)
             return self.get_chat_completion_result
         except openai.error.OpenAIError:
             logging.warning(f"Cannot use chat_completion endpoint for model {model_name}, the component will try to use"
