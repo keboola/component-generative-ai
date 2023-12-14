@@ -23,9 +23,7 @@ from kbcstorage.client import Client
 
 from configuration import Configuration
 from client.openai_client import OpenAIClient, AzureOpenAIClient
-from client.base import AIClientException
 
-from openai import AsyncOpenAI
 
 # configuration variables
 RESULT_COLUMN_NAME = 'result_value'
