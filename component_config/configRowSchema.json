@@ -66,7 +66,7 @@
           "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.",
           "propertyOrder": 30
         },
-        "request_timeout": {
+        "timeout": {
           "type": "number",
           "title": "Request Timeout",
           "default": 30,
@@ -182,7 +182,7 @@
         "primary_keys_array": {
           "type": "array",
           "title": "Primary Keys",
-          "format": "select",
+        "format": "select",
           "items": {
             "type": "string"
           },

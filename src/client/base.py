@@ -11,7 +11,7 @@ class CommonClient(ABC):
     """
 
     @abstractmethod
-    def infer(self, model_name: str, prompt: str, **model_options):
+    async def infer(self, model_name: str, prompt: str, **model_options):
         pass
 
     def list_models(self) -> list:
