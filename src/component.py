@@ -75,8 +75,6 @@ class Component(ComponentBase):
         """
         Main execution code
         """
-        self.test_prompt()
-        exit()
         self.init_configuration()
 
         client = self.get_client()
