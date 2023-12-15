@@ -73,6 +73,7 @@ class Component(ComponentBase):
         self.failed_requests = 0
         self.tokens_used = 0
         self.token_limit_reached = False
+        self.out_table_columns = []
 
         if logging.getLogger().isEnabledFor(logging.INFO):
             httpx_logger = logging.getLogger("httpx")
@@ -152,7 +153,7 @@ class Component(ComponentBase):
             next(reader, None)
 
             with open(out_table.full_path, 'w+') as out_file:
-                writer = csv.DictWriter(out_file, fieldnames=out_table.columns)
+                writer = csv.DictWriter(out_file, fieldnames=self.out_table_columns)
                 writer.writeheader()
                 rows = []
                 for row in reader:
@@ -209,7 +210,7 @@ class Component(ComponentBase):
         if missing_keys := [key for key in self.input_keys if key not in input_table.columns]:
             raise UserException(f'The columns "{missing_keys}" need to be present in the input data!')
 
-        out_table = self._build_out_table()
+        out_table = self._build_out_table(input_table)
 
         if missing_keys := [t for t in out_table.primary_key if t not in input_table.columns]:
             raise UserException(f'Some specified primary keys are not in the input table: {missing_keys}')
@@ -222,13 +223,15 @@ class Component(ComponentBase):
         output_row[RESULT_COLUMN_NAME] = result.strip()
         return output_row
 
-    def _build_out_table(self) -> TableDefinition:
+    def _build_out_table(self, input_table: TableDefinition) -> TableDefinition:
         destination_config = self.configuration.parameters['destination']
 
         if not (out_table_name := destination_config.get("output_table_name")):
             out_table_name = f"{self.environment_variables.config_row_id}.csv"
         else:
             out_table_name = f"{out_table_name}.csv"
+
+        self.out_table_columns = input_table.columns + [RESULT_COLUMN_NAME]
 
         primary_key = destination_config.get('primary_keys_array', [])
 
