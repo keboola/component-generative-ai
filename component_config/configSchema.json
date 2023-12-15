@@ -15,6 +15,7 @@
           "enum": [
             "openai",
             "azure_openai",
+            "google",
             "llama_2"
           ],
           "default": "open_ai",
@@ -22,6 +23,7 @@
             "enum_titles": [
               "OpenAI",
               "Azure OpenAI",
+              "Google",
               "Llama 2 (not implemented yet)"
             ]
           },

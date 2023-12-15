@@ -1,9 +1,10 @@
 keboola.component==1.4.3
 keboola.utils==1.1.0
 kbcstorage==0.7.2
-openai==1.3.9
+openai==1.4.0
 mock==4.0.3
 freezegun==1.2.2
 pystache
 backoff
 dataconf
+google-generativeai==0.3.1

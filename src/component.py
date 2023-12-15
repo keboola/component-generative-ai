@@ -23,6 +23,7 @@ from kbcstorage.client import Client
 
 from configuration import Configuration
 from client.openai_client import OpenAIClient, AzureOpenAIClient
+from client.googleai_client import GoogleAIClient
 from client.base import AIClientException
 
 # configuration variables
@@ -137,6 +138,8 @@ class Component(ComponentBase):
             return OpenAIClient(api_key=self.api_key)
         elif self.service == "azure_openai":
             return AzureOpenAIClient(self.api_key, self.api_base, self.deployment_id, self.api_version)
+        elif self.service == "google":
+            return GoogleAIClient(self.api_key)
         else:
             raise UserException(f"{self.service} service is not implemented yet.")
 
@@ -183,14 +186,14 @@ class Component(ComponentBase):
         try:
             result, token_usage = await client.infer(model_name=self.model, prompt=prompt, **self.model_options)
         except AIClientException as e:
-            raise UserException(f"Error occured while calling OpenAI API: {e}")
+            raise UserException(f"Error occured while calling AI API: {e}")
 
         self.tokens_used += token_usage
         logging.debug(f"Tokens spend: {self.tokens_used}")
         self.processed_table_rows += 1
 
         if self.processed_table_rows % LOG_EVERY == 0:
-            logging.info(f"Processed {self.processed_table_rows} rows. Tokens used: {self.tokens_used}")
+            logging.info(f"Processed {self.processed_table_rows} rows. tokens used: {self.tokens_used}")
 
         if result:
             return self._build_output_row(row, result)
