@@ -152,6 +152,10 @@ class Component(ComponentBase):
                 writer.writeheader()
                 rows = []
                 for row in reader:
+
+                    # Skip the header row
+                    next(reader, None)
+
                     rows.append(row)
 
                     if len(rows) >= BATCH_SIZE:
