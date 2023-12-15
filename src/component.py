@@ -11,9 +11,9 @@ import json
 import os
 from io import StringIO
 from itertools import islice
-
 import pystache as pystache
 import requests.exceptions
+
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.sync_actions import ValidationResult, MessageType
 from keboola.component.dao import TableDefinition
