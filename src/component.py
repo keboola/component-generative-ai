@@ -209,7 +209,7 @@ class Component(ComponentBase):
         if missing_keys := [key for key in self.input_keys if key not in input_table.columns]:
             raise UserException(f'The columns "{missing_keys}" need to be present in the input data!')
 
-        out_table = self._build_out_table(input_table)
+        out_table = self._build_out_table()
 
         if missing_keys := [t for t in out_table.primary_key if t not in input_table.columns]:
             raise UserException(f'Some specified primary keys are not in the input table: {missing_keys}')
@@ -222,7 +222,7 @@ class Component(ComponentBase):
         output_row[RESULT_COLUMN_NAME] = result.strip()
         return output_row
 
-    def _build_out_table(self, input_table: TableDefinition) -> TableDefinition:
+    def _build_out_table(self) -> TableDefinition:
         destination_config = self.configuration.parameters['destination']
 
         if not (out_table_name := destination_config.get("output_table_name")):
