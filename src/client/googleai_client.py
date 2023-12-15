@@ -27,11 +27,9 @@ class GoogleAIClient:
         return content, token_usage
 
     @staticmethod
-    async def get_total_tokens(model: str, prompt: str, response: str = ""):
-        prompt_tokens = google.ai.generativelanguage.CountTextTokensRequest(model, prompt)
-        response_tokens = 0  # TODO
-
-        return prompt_tokens + response_tokens
+    async def get_total_tokens(model: str, prompt: str, response: str = "") -> int:
+        # todo implement https://ai.google.dev/api/python/google/ai/generativelanguage/CountTextTokensRequest
+        return 100
 
     @staticmethod
     async def list_models() -> list:
