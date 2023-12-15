@@ -39,7 +39,7 @@ PREVIEW_LIMIT = 5
 PROMPT_TEMPLATES = 'templates/prompts.json'
 
 BATCH_SIZE = 10
-LOG_EVERY = 25
+LOG_EVERY = 100
 
 
 class Component(ComponentBase):
