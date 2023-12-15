@@ -36,10 +36,9 @@ KEY_DESTINATION = 'destination'
 REQUIRED_PARAMETERS = [KEY_API_TOKEN, KEY_PROMPT, KEY_DESTINATION]
 
 PREVIEW_LIMIT = 5
-PROMPT_TEMPLATES = 'templates/prompts.json'
-
 BATCH_SIZE = 10
 LOG_EVERY = 100
+PROMPT_TEMPLATES = 'templates/prompts.json'
 
 
 class Component(ComponentBase):
