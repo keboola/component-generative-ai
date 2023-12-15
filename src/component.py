@@ -338,7 +338,7 @@ class Component(ComponentBase):
     def count_rows(file_path):
         with open(file_path, 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
-            row_count = sum(1 for row in reader)
+            row_count = sum(1 for row in reader)-1
         logging.info(f"Input table has {row_count} rows.")
         return row_count
 
