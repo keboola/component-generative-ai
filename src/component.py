@@ -191,7 +191,7 @@ class Component(ComponentBase):
         self.processed_table_rows += 1
 
         if self.processed_table_rows % LOG_EVERY == 0:
-            print(f"Processed {self.processed_table_rows} rows. Tokens used: {self.tokens_used}")
+            logging.info(f"Processed {self.processed_table_rows} rows. Tokens used: {self.tokens_used}")
 
         if result:
             return self._build_output_row(row, result)
