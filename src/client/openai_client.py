@@ -39,8 +39,7 @@ class OpenAIClient(AsyncOpenAI):
                                              max_tokens=20)
             return self.get_completion_result
         except openai.OpenAIError:
-            raise AIClientException(f"The component is unable to use chat_completion and completion endpoints with "
-                                    f"model {model_name}.")
+            raise AIClientException(f"The component is unable to use model {model_name}. Please check your API key.")
 
     async def get_completion_result(self, model_name: str, prompt: str, **model_options) \
             -> Tuple[Optional[str], Optional[int]]:

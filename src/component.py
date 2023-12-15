@@ -23,7 +23,7 @@ from kbcstorage.client import Client
 
 from configuration import Configuration
 from client.openai_client import OpenAIClient, AzureOpenAIClient
-
+from client.base import AIClientException
 
 # configuration variables
 RESULT_COLUMN_NAME = 'result_value'
@@ -73,6 +73,10 @@ class Component(ComponentBase):
         self.failed_requests = 0
         self.tokens_used = 0
         self.token_limit_reached = False
+
+        if logging.getLogger().isEnabledFor(logging.INFO):
+            httpx_logger = logging.getLogger("httpx")
+            httpx_logger.setLevel(logging.ERROR)
 
     def run(self):
         """
@@ -177,7 +181,11 @@ class Component(ComponentBase):
         return await asyncio.gather(*tasks)
 
     async def _infer(self, client, row, prompt):
-        result, token_usage = await client.infer(model_name=self.model, prompt=prompt, **self.model_options)
+        try:
+            result, token_usage = await client.infer(model_name=self.model, prompt=prompt, **self.model_options)
+        except AIClientException as e:
+            raise UserException(f"Error occured while calling OpenAI API: {e}")
+
         self.tokens_used += token_usage
         logging.debug(f"Tokens spend: {self.tokens_used}")
         self.processed_table_rows += 1
