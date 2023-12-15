@@ -191,6 +191,8 @@ class Component(ComponentBase):
         try:
             result, token_usage = await client.infer(model_name=self.model, prompt=prompt, **self.model_options)
         except AIClientException as e:
+            if "User location is not supported for the API use" in str(e):
+                raise UserException("Google AI services are only available on US stack.")
             raise UserException(f"Error occured while calling AI API: {e}")
 
         self.tokens_used += token_usage

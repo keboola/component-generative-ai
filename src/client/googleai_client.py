@@ -23,7 +23,7 @@ class GoogleAIClient:
         try:
             content = str(response.text)
         except IndexError as e:
-            content = str(e)
+            content = f"Failed to process prompt: {prompt}, reason: {e}"
 
         token_usage = await self.get_total_tokens(model_name, prompt, content)
 
@@ -32,7 +32,7 @@ class GoogleAIClient:
     @staticmethod
     async def get_total_tokens(model: str, prompt: str, response: str = "") -> int:
         # todo implement https://ai.google.dev/api/python/google/ai/generativelanguage/CountTextTokensRequest
-        return 100
+        return 0
 
     @staticmethod
     async def list_models() -> list:
