@@ -147,15 +147,15 @@ class Component(ComponentBase):
 
         with open(input_table.full_path, 'r') as input_file:
             reader = csv.DictReader(input_file)
+
+            # Skip the header row
+            next(reader, None)
+
             with open(out_table.full_path, 'w+') as out_file:
                 writer = csv.DictWriter(out_file, fieldnames=out_table.columns)
                 writer.writeheader()
                 rows = []
                 for row in reader:
-
-                    # Skip the header row
-                    next(reader, None)
-
                     rows.append(row)
 
                     if len(rows) >= BATCH_SIZE:
