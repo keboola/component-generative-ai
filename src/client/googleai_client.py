@@ -20,7 +20,7 @@ class GoogleAIClient:
         except google.api_core.exceptions.FailedPrecondition as e:
             raise AIClientException(f"FailedPrecondition: {e}")
 
-        content = str(response)
+        content = str(response.text)
 
         token_usage = await self.get_total_tokens(model_name, prompt, content)
 
