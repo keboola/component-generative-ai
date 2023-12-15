@@ -23,7 +23,7 @@
             "enum_titles": [
               "OpenAI",
               "Azure OpenAI",
-              "Google",
+              "Google (Only available on US stack)",
               "Llama 2 (not implemented yet)"
             ]
           },
