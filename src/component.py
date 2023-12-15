@@ -230,11 +230,10 @@ class Component(ComponentBase):
         else:
             out_table_name = f"{out_table_name}.csv"
 
-        columns = input_table.columns + [RESULT_COLUMN_NAME]
         primary_key = destination_config.get('primary_keys_array', [])
 
         incremental_load = destination_config.get('incremental_load', False)
-        return self.create_out_table_definition(out_table_name, columns=columns, primary_key=primary_key,
+        return self.create_out_table_definition(out_table_name, columns=[], primary_key=primary_key,
                                                 incremental=incremental_load)
 
     @staticmethod
@@ -346,7 +345,6 @@ class Component(ComponentBase):
         with open(file_path, 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
             row_count = sum(1 for row in reader)-1
-        logging.info(f"Input table has {row_count} rows.")
         return row_count
 
     @sync_action('listPkeys')
