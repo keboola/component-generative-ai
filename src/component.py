@@ -39,6 +39,7 @@ PREVIEW_LIMIT = 5
 PROMPT_TEMPLATES = 'templates/prompts.json'
 
 BATCH_SIZE = 10
+LOG_EVERY = 25
 
 
 class Component(ComponentBase):
@@ -54,6 +55,8 @@ class Component(ComponentBase):
 
     def __init__(self):
         super().__init__()
+        self.table_rows: int = 0
+        self.processed_table_rows: int = 0
         self.service = None
         self.api_key = None
         # For Azure OpenAI
@@ -80,6 +83,9 @@ class Component(ComponentBase):
         client = self.get_client()
 
         input_table, out_table = self.prepare_tables()
+
+        self.table_rows = self.count_rows(input_table.full_path)
+
         asyncio.run(self.process_prompts(client, input_table, out_table))
 
         self.write_manifest(out_table)
@@ -144,6 +150,7 @@ class Component(ComponentBase):
 
                     if len(rows) >= BATCH_SIZE:
                         batch_results = await self.process_batch(client, rows)
+                        rows = []
                         writer.writerows(batch_results)
 
                     if self.max_token_spend != 0 and self.tokens_used >= self.max_token_spend:
@@ -165,14 +172,18 @@ class Component(ComponentBase):
 
         tasks = []
         for row, prompt in zip(rows, prompts):
-            tasks.append(self._process_batch(client, row, prompt))
+            tasks.append(self._infer(client, row, prompt))
 
         return await asyncio.gather(*tasks)
 
-    async def _process_batch(self, client, row, prompt):
+    async def _infer(self, client, row, prompt):
         result, token_usage = await client.infer(model_name=self.model, prompt=prompt, **self.model_options)
         self.tokens_used += token_usage
         logging.debug(f"Tokens spend: {self.tokens_used}")
+        self.processed_table_rows += 1
+
+        if self.processed_table_rows % LOG_EVERY == 0:
+            print(f"Processed {self.processed_table_rows} rows")
 
         if result:
             return self._build_output_row(row, result)
@@ -316,6 +327,14 @@ class Component(ComponentBase):
             raise UserException(f"Cannot fetch list of columns for table {table_id}")
         return columns
 
+    @staticmethod
+    def count_rows(file_path):
+        with open(file_path, 'r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            row_count = sum(1 for row in reader)
+        logging.info(f"Input table has {row_count} rows.")
+        return row_count
+
     @sync_action('listPkeys')
     def list_table_columns(self):
         """
@@ -380,7 +399,7 @@ class Component(ComponentBase):
         tasks = []
         for row in rows:
             prompt = self._build_prompt(self.input_keys, row)
-            tasks.append(self._process_batch(client, row, prompt))
+            tasks.append(self._infer(client, row, prompt))
 
         return await asyncio.gather(*tasks)
 
