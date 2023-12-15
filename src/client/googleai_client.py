@@ -22,9 +22,9 @@ class GoogleAIClient:
 
         try:
             content = str(response.text)
-        except IndexError:
+        except IndexError as e:
             print(response)
-            exit()
+            content = str(e)
 
         token_usage = await self.get_total_tokens(model_name, prompt, content)
 
