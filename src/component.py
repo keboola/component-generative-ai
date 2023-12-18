@@ -131,6 +131,7 @@ class Component(ComponentBase):
         elif self.service == "azure_openai":
             return AzureOpenAIClient(self.api_key, self.api_base, self.deployment_id, self.api_version)
         elif self.service == "google":
+            logging.info(f"Using token: {self.api_key[:5]}")
             return GoogleAIClient(self.api_key)
         else:
             raise UserException(f"{self.service} service is not implemented yet.")
