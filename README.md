@@ -25,7 +25,8 @@ For information on retrieving your API key, API Base, and Deployment ID, refer t
 
 #### AI Service Provider: Google
 
-- **API Key** (`api_key`) - Contact support@keboola.com for a free API key.
+- Only works on US AWS stack – connection.keboola.com
+- Default API Key for this service is provided by Keboola. 
 
 ### Other options:
 
