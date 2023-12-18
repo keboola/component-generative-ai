@@ -3,14 +3,14 @@ import openai
 from openai import AsyncOpenAI, AsyncAzureOpenAI
 from typing import Optional, Tuple, Callable
 
-from .base import AIClientException
+from .base import CommonClient, AIClientException
 
 
 def on_giveup(details: dict):
     raise AIClientException(details.get("exception"))
 
 
-class OpenAIClient(AsyncOpenAI):
+class OpenAIClient(AsyncOpenAI, CommonClient):
     """
     Implements OpenAI and AzureOpenAI clients.
     """
@@ -65,7 +65,7 @@ class OpenAIClient(AsyncOpenAI):
         return [model.id for model in r.data]
 
 
-class AzureOpenAIClient(AsyncAzureOpenAI):
+class AzureOpenAIClient(AsyncAzureOpenAI, CommonClient):
     def __init__(self, api_key, api_base, deployment_id, api_version):
         super().__init__(api_key=api_key,
                          api_version=api_version,

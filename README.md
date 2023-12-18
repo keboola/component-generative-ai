@@ -23,6 +23,12 @@ This component enables you to query OpenAI, Azure OpenAI, and Llama 2 (coming so
 
 For information on retrieving your API key, API Base, and Deployment ID, refer to the [Microsoft Azure documentation](https://learn.microsoft.com/cs-cz/azure/ai-services/openai/quickstart?tabs=command-line&pivots=programming-language-python#retrieve-key-and-endpoint).
 
+#### AI Service Provider: Google
+
+- **API Key** (`api_key`) - Contact support@keboola.com for a free API key.
+
+### Other options:
+
 - **Model (`prompt`)** You can use the sync action to load available models for your account.
 - **Prompt (`prompt`):** The prompt and data input pattern. Use the placeholder [[INPUT_COLUMN]] to refer to the input column. The input table must contain the referenced column.
 - **Incremental Load (`incremental load`):** If enabled, the table will update rather than be overwritten. Tables with primary keys will update rows, whereas those without a primary key will append rows.

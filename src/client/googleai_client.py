@@ -2,10 +2,10 @@ import google.api_core.exceptions
 import google.generativeai as genai
 from typing import Optional, Tuple
 
-from .base import AIClientException
+from .base import CommonClient, AIClientException
 
 
-class GoogleAIClient:
+class GoogleAIClient(CommonClient):
     def __init__(self, api_key):
         genai.configure(api_key=api_key)
         self.model = None
@@ -34,8 +34,7 @@ class GoogleAIClient:
         # todo implement https://ai.google.dev/api/python/google/ai/generativelanguage/CountTextTokensRequest
         return 0
 
-    @staticmethod
-    async def list_models() -> list:
+    async def list_models(self) -> list:
         models_with_generate_content = [
             m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods
         ]
