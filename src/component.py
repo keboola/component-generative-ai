@@ -120,6 +120,9 @@ class Component(ComponentBase):
             self.api_version = self._configuration.authentication.api_version
         self.api_key = self._configuration.authentication.pswd_api_token
 
+        if self.api_key == "":
+            raise UserException("API token field cannot be empty.")
+
         self.model = self._configuration.model
         logging.info(f"The component is using the model: {self.model}")
 
