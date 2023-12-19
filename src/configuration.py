@@ -59,13 +59,14 @@ class AdditionalOptions(ConfigurationBase):
     temperature: float
     presence_penalty: float
     frequency_penalty: float
-    request_timeout: int
+    timeout: int = 60
 
 
 @dataclass
 class Authentication(ConfigurationBase):
     service: str
     pswd_api_token: str
+    api_token: str = ""  # stack parameter
     api_base: str = ""
     deployment_id: str = ""
     api_version: str = ""

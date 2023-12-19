@@ -1,1 +1,1 @@
-Query OpenAI and Azure OpenAI services with data provided from your KBC project.
+Query OpenAI, Azure OpenAI and Google Gemini AI services with data provided from your KBC project.

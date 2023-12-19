@@ -2,6 +2,7 @@
 Template Component main class.
 
 """
+import asyncio
 import csv
 import dataclasses
 import logging
@@ -10,10 +11,9 @@ import json
 import os
 from io import StringIO
 from itertools import islice
-
-
 import pystache as pystache
 import requests.exceptions
+
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.sync_actions import ValidationResult, MessageType
 from keboola.component.dao import TableDefinition
@@ -21,14 +21,15 @@ from keboola.component.exceptions import UserException
 from kbcstorage.tables import Tables
 from kbcstorage.client import Client
 
-
 from configuration import Configuration
 from client.openai_client import OpenAIClient, AzureOpenAIClient
+from client.googleai_client import GoogleAIClient
 from client.base import AIClientException
 
 # configuration variables
 RESULT_COLUMN_NAME = 'result_value'
 KEY_API_TOKEN = '#api_token'
+KEY_DEFAULT_API_TOKEN = 'default_api_token'
 KEY_PROMPT = 'prompt'
 KEY_DESTINATION = 'destination'
 
@@ -37,22 +38,17 @@ KEY_DESTINATION = 'destination'
 REQUIRED_PARAMETERS = [KEY_API_TOKEN, KEY_PROMPT, KEY_DESTINATION]
 
 PREVIEW_LIMIT = 5
+BATCH_SIZE = 10
+LOG_EVERY = 100
 PROMPT_TEMPLATES = 'templates/prompts.json'
 
 
 class Component(ComponentBase):
-    """
-        Extends base class for general Python components. Initializes the CommonInterface
-        and performs configuration validation.
-
-        For easier debugging the data folder is picked up by default from `../data` path,
-        relative to working directory.
-
-        If `debug` parameter is present in the `azure_config.json`, the default logger is set to verbose DEBUG mode.
-    """
 
     def __init__(self):
         super().__init__()
+        self.table_rows: int = 0
+        self.processed_table_rows: int = 0
         self.service = None
         self.api_key = None
         # For Azure OpenAI
@@ -69,6 +65,11 @@ class Component(ComponentBase):
         self.failed_requests = 0
         self.tokens_used = 0
         self.token_limit_reached = False
+        self.out_table_columns = []
+
+        if logging.getLogger().isEnabledFor(logging.INFO):
+            httpx_logger = logging.getLogger("httpx")
+            httpx_logger.setLevel(logging.ERROR)
 
     def run(self):
         """
@@ -77,34 +78,12 @@ class Component(ComponentBase):
         self.init_configuration()
 
         client = self.get_client()
-        inference_function = client.get_inference_function(self.model)
 
         input_table, out_table = self.prepare_tables()
 
-        with open(input_table.full_path, 'r') as input_file:
-            reader = csv.DictReader(input_file)
-            with open(out_table.full_path, 'w+') as out_file:
-                writer = csv.DictWriter(out_file, fieldnames=out_table.columns)
-                writer.writeheader()
-                for row in reader:
-                    prompt = self._build_prompt(self.input_keys, row)
+        self.table_rows = self.count_rows(input_table.full_path)
 
-                    try:
-                        result, token_usage = client.infer(self.model, inference_function, prompt,
-                                                           **self.model_options)
-                        self.tokens_used += token_usage
-                    except AIClientException as e:
-                        raise UserException(f"The component failed to process request. {e}") from e
-
-                    if result:
-                        writer.writerow(self._build_output_row(row, result))
-                    else:
-                        self.failed_requests += 1
-
-                    if self.max_token_spend != 0 and self.tokens_used >= self.max_token_spend:
-                        self.token_limit_reached = True
-                        logging.error(f"The token spend limit of {self.max_token_spend} has been reached.")
-                        break
+        asyncio.run(self.process_prompts(client, input_table, out_table))
 
         self.write_manifest(out_table)
 
@@ -149,11 +128,79 @@ class Component(ComponentBase):
 
     def get_client(self):
         if self.service == "openai":
-            return OpenAIClient(self.api_key)
+            return OpenAIClient(api_key=self.api_key)
         elif self.service == "azure_openai":
             return AzureOpenAIClient(self.api_key, self.api_base, self.deployment_id, self.api_version)
+        elif self.service == "google":
+            if self.api_key == "":
+                self.api_key = self.configuration.image_parameters.get(KEY_DEFAULT_API_TOKEN)
+                logging.info("Using API key provided by Keboola.")
+            return GoogleAIClient(self.api_key)
         else:
             raise UserException(f"{self.service} service is not implemented yet.")
+
+    async def process_prompts(self, client, input_table, out_table) -> None:
+
+        with open(input_table.full_path, 'r') as input_file:
+            reader = csv.DictReader(input_file)
+
+            # Skip the header row
+            next(reader, None)
+
+            with open(out_table.full_path, 'w+') as out_file:
+                writer = csv.DictWriter(out_file, fieldnames=self.out_table_columns)
+                writer.writeheader()
+                rows = []
+                for row in reader:
+                    rows.append(row)
+
+                    if len(rows) >= BATCH_SIZE:
+                        batch_results = await self.process_batch(client, rows)
+                        rows = []
+                        writer.writerows(batch_results)
+
+                    if self.max_token_spend != 0 and self.tokens_used >= self.max_token_spend:
+                        self.token_limit_reached = True
+                        logging.warning(f"The token spend limit of {self.max_token_spend} has been reached. "
+                                        f"The component will stop after completing current batch.")
+                        break
+
+                # Process remaining rows
+                if rows:
+                    batch_results = await self.process_batch(client, rows)
+                    writer.writerows(batch_results)
+
+    async def process_batch(self, client, rows: list):
+        prompts = []
+        for row in rows:
+            prompt = self._build_prompt(self.input_keys, row)
+            prompts.append(prompt)
+
+        tasks = []
+        for row, prompt in zip(rows, prompts):
+            tasks.append(self._infer(client, row, prompt))
+
+        return await asyncio.gather(*tasks)
+
+    async def _infer(self, client, row, prompt):
+        try:
+            result, token_usage = await client.infer(model_name=self.model, prompt=prompt, **self.model_options)
+        except AIClientException as e:
+            if "User location is not supported for the API use" in str(e):
+                raise UserException("Google AI services are only available on US stack.")
+            raise UserException(f"Error occured while calling AI API: {e}")
+
+        self.tokens_used += token_usage
+        logging.debug(f"Tokens spend: {self.tokens_used}")
+        self.processed_table_rows += 1
+
+        if self.processed_table_rows % LOG_EVERY == 0:
+            logging.info(f"Processed {self.processed_table_rows} rows. tokens used: {self.tokens_used}")
+
+        if result:
+            return self._build_output_row(row, result)
+        else:
+            self.failed_requests += 1
 
     def prepare_tables(self):
         input_table = self._get_input_table()
@@ -181,11 +228,12 @@ class Component(ComponentBase):
         else:
             out_table_name = f"{out_table_name}.csv"
 
-        columns = input_table.columns + [RESULT_COLUMN_NAME]
+        self.out_table_columns = input_table.columns + [RESULT_COLUMN_NAME]
+
         primary_key = destination_config.get('primary_keys_array', [])
 
         incremental_load = destination_config.get('incremental_load', False)
-        return self.create_out_table_definition(out_table_name, columns=columns, primary_key=primary_key,
+        return self.create_out_table_definition(out_table_name, columns=[], primary_key=primary_key,
                                                 incremental=incremental_load)
 
     @staticmethod
@@ -292,6 +340,13 @@ class Component(ComponentBase):
             raise UserException(f"Cannot fetch list of columns for table {table_id}")
         return columns
 
+    @staticmethod
+    def count_rows(file_path):
+        with open(file_path, 'r', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            row_count = sum(1 for row in reader)-1
+        return row_count
+
     @sync_action('listPkeys')
     def list_table_columns(self):
         """
@@ -313,9 +368,7 @@ class Component(ComponentBase):
         proper formatting for ValidationResult.
         """
         self.init_configuration()
-
         client = self.get_client()
-        inference_function = client.get_inference_function(self.model)
 
         table_id = self._get_storage_source()
         if len(self.input_keys) > 30:
@@ -330,21 +383,22 @@ class Component(ComponentBase):
         if missing_keys := [key for key in self.input_keys if key not in table_preview[0]]:
             raise UserException(f'The columns "{missing_keys}" need to be present in the input data!')
 
-        results = []
+        rows = []
         for row in table_preview:
-            prompt = self._build_prompt(self.input_keys, row)
-            result, token_usage = client.infer(self.model, inference_function, prompt, **self.model_options)
-            self.tokens_used += token_usage
+            rows.append(row)
 
-            if result:
-                output_row = self._build_output_row(row, result)
-                output = output_row.get(RESULT_COLUMN_NAME, "")
-                results.append(output)
+        results = asyncio.run(self._test_prompt(client, rows))
 
-        if results:
+        output = []
+        if len(results) > 0:
+            for res in results:
+                o = res.get(RESULT_COLUMN_NAME, "")
+                output.append(o)
+
+        if output:
             estimated_token_usage = self.estimate_token_usage(preview_size, table_size)
 
-            markdown = self.create_markdown_table(results)
+            markdown = self.create_markdown_table(output)
             tokens_used_info = f"\nTokens used during test prompting: {self.tokens_used}"
             token_estimation_info = f"\nEstimated token usage for the whole input table: {estimated_token_usage}"
             markdown += tokens_used_info
@@ -352,6 +406,14 @@ class Component(ComponentBase):
             return ValidationResult(markdown, MessageType.SUCCESS)
         else:
             return ValidationResult("Query returned no data.", MessageType.WARNING)
+
+    async def _test_prompt(self, client, rows):
+        tasks = []
+        for row in rows:
+            prompt = self._build_prompt(self.input_keys, row)
+            tasks.append(self._infer(client, row, prompt))
+
+        return await asyncio.gather(*tasks)
 
     @sync_action('getPromptTemplate')
     def get_prompt_template(self) -> ValidationResult:
@@ -378,7 +440,11 @@ class Component(ComponentBase):
             self.api_version = authentication.get("api_version")
 
         client = self.get_client()
-        models = client.list_models()
+        return asyncio.run(self._list_models(client))
+
+    @staticmethod
+    async def _list_models(client):
+        models = await client.list_models()
         return [{"value": m, "label": m} for m in models]
 
 

@@ -1,18 +1,17 @@
-from abc import ABC, abstractmethod
+from typing import Protocol, Tuple, Optional
 
 
 class AIClientException(Exception):
     pass
 
 
-class CommonClient(ABC):
+class CommonClient(Protocol):
     """
     Declares default AIClient behaviour
     """
 
-    @abstractmethod
-    def infer(self, model_name: str, prompt: str, **model_options):
+    async def infer(self, model_name: str, prompt: str, **model_options) -> Tuple[Optional[str], Optional[int]]:
         pass
 
-    def list_models(self) -> list:
+    async def list_models(self) -> list:
         pass
