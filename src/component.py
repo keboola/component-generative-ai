@@ -29,7 +29,6 @@ from client.base import AIClientException
 # configuration variables
 RESULT_COLUMN_NAME = 'result_value'
 KEY_API_TOKEN = '#api_token'
-KEY_API_TOKEN_STACK = 'api_token'
 KEY_PROMPT = 'prompt'
 KEY_DESTINATION = 'destination'
 
@@ -47,7 +46,6 @@ class Component(ComponentBase):
 
     def __init__(self):
         super().__init__()
-        self.api_key_stack = None
         self.table_rows: int = 0
         self.processed_table_rows: int = 0
         self.service = None
@@ -121,7 +119,6 @@ class Component(ComponentBase):
             self.deployment_id = self._configuration.authentication.deployment_id
             self.api_version = self._configuration.authentication.api_version
         self.api_key = self._configuration.authentication.pswd_api_token
-        self.api_key_stack = self._configuration.authentication.api_token
 
         self.model = self._configuration.model
         logging.info(f"The component is using the model: {self.model}")
@@ -134,8 +131,6 @@ class Component(ComponentBase):
         elif self.service == "azure_openai":
             return AzureOpenAIClient(self.api_key, self.api_base, self.deployment_id, self.api_version)
         elif self.service == "google":
-            if self.api_key == "":
-                self.api_key = self.api_key_stack
             logging.info(f"Using API key: {self.api_key[:5]}")
             return GoogleAIClient(self.api_key)
         else:
