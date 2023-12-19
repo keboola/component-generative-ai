@@ -1,5 +1,6 @@
 import asyncio
 from typing import Optional, Tuple
+import logging
 
 import google.api_core.exceptions
 import google.generativeai as genai
@@ -33,6 +34,7 @@ class GoogleAIClient(CommonClient):
                     raise AIClientException(f"ResourceExhausted: {e}")
                 else:
                     backoff_seconds = 2 ** current_retry
+                    logging.warning(f"Retrying: {current_retry}/{max_retries}")
                     await asyncio.sleep(backoff_seconds)
                     continue
 
