@@ -1,6 +1,8 @@
+import asyncio
+from typing import Optional, Tuple
+
 import google.api_core.exceptions
 import google.generativeai as genai
-from typing import Optional, Tuple
 
 from .base import CommonClient, AIClientException
 
@@ -15,12 +17,24 @@ class GoogleAIClient(CommonClient):
         if not self.model:
             self.model = genai.GenerativeModel(model_name=model_name)
 
-        try:
-            response = await self.model.generate_content_async(prompt)
-        except google.api_core.exceptions.FailedPrecondition as e:
-            raise AIClientException(f"FailedPrecondition: {e}")
-        except google.auth.exceptions.GoogleAuthError as e:
-            raise AIClientException(f"GoogleAuthError: {e}")
+        max_retries = 3
+        current_retry = 0
+
+        while current_retry < max_retries:
+            try:
+                response = await self.model.generate_content_async(prompt)
+            except google.api_core.exceptions.FailedPrecondition as e:
+                raise AIClientException(f"FailedPrecondition: {e}")
+            except google.auth.exceptions.GoogleAuthError as e:
+                raise AIClientException(f"GoogleAuthError: {e}")
+            except google.api_core.exceptions.ResourceExhausted as e:
+                current_retry += 1
+                if current_retry == max_retries:
+                    raise AIClientException(f"ResourceExhausted: {e}")
+                else:
+                    backoff_seconds = 2 ** current_retry
+                    await asyncio.sleep(backoff_seconds)
+                    continue
 
         try:
             content = str(response.text)
