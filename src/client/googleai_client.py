@@ -1,7 +1,5 @@
-import asyncio
+import backoff
 from typing import Optional, Tuple
-import logging
-
 import google.api_core.exceptions
 import google.generativeai as genai
 
@@ -13,31 +11,18 @@ class GoogleAIClient(CommonClient):
         genai.configure(api_key=api_key)
         self.model = None
 
+    @backoff.on_exception(backoff.expo, google.api_core.exceptions.ResourceExhausted, max_time=60)
     async def infer(self, model_name: str, prompt: str, **model_options) \
             -> Tuple[Optional[str], Optional[int]]:
         if not self.model:
             self.model = genai.GenerativeModel(model_name=model_name)
 
-        max_retries = 4
-        current_retry = 0
-
-        logging.debug(f"Prompting model {model_name}, prompt: {prompt}")
-        while current_retry < max_retries:
-            try:
-                response = await self.model.generate_content_async(prompt)
-            except google.api_core.exceptions.FailedPrecondition as e:
-                raise AIClientException(f"FailedPrecondition: {e}")
-            except google.auth.exceptions.GoogleAuthError as e:
-                raise AIClientException(f"GoogleAuthError: {e}")
-            except google.api_core.exceptions.ResourceExhausted as e:
-                current_retry += 1
-                if current_retry == max_retries:
-                    raise AIClientException(f"ResourceExhausted: {e}")
-                else:
-                    backoff_seconds = 2 ** current_retry
-                    logging.warning(f"Retrying: {current_retry}/{max_retries}")
-                    await asyncio.sleep(backoff_seconds)
-                    continue
+        try:
+            response = await self.model.generate_content_async(prompt)
+        except google.api_core.exceptions.FailedPrecondition as e:
+            raise AIClientException(f"FailedPrecondition: {e}")
+        except google.auth.exceptions.GoogleAuthError as e:
+            raise AIClientException(f"GoogleAuthError: {e}")
 
         try:
             content = str(response.text)
