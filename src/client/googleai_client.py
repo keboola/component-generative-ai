@@ -19,6 +19,8 @@ class GoogleAIClient(CommonClient):
             response = await self.model.generate_content_async(prompt)
         except google.api_core.exceptions.FailedPrecondition as e:
             raise AIClientException(f"FailedPrecondition: {e}")
+        except google.auth.exceptions.GoogleAuthError as e:
+            raise AIClientException(f"GoogleAuthError: {e}")
 
         try:
             content = str(response.text)
