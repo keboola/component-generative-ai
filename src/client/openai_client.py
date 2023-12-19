@@ -74,8 +74,12 @@ class AzureOpenAIClient(AsyncAzureOpenAI, CommonClient):
 
     async def infer(self, model_name: str, prompt: str, **model_options) \
             -> Tuple[Optional[str], Optional[int]]:
-        response = await self.chat.completions.create(model=model_name,
-                                                      messages=[{"role": "user", "content": prompt}], **model_options)
+        try:
+            response = await self.chat.completions.create(model=model_name,
+                                                          messages=[{"role": "user", "content": prompt}],
+                                                          **model_options)
+        except openai.BadRequestError as e:
+            raise AIClientException(f"BadRequest Error: {e}")
 
         content = response.choices[0].message.content
         token_usage = response.usage.total_tokens
