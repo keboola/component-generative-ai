@@ -21,6 +21,7 @@ class GoogleAIClient(CommonClient):
         max_retries = 4
         current_retry = 0
 
+        logging.debug(f"Prompting model {model_name}, prompt: {prompt}")
         while current_retry < max_retries:
             try:
                 response = await self.model.generate_content_async(prompt)
