@@ -122,6 +122,7 @@ class Component(ComponentBase):
 
         self.model = self._configuration.model
         logging.info(f"The component is using the model: {self.model}")
+        logging.info(f"Test value: {self._configuration.test}")
 
         self.model_options = dataclasses.asdict(self._configuration.additional_options)
 

@@ -92,3 +92,4 @@ class Configuration(ConfigurationBase):
     max_token_spend: int = 0
     prompt_templates: PromptTemplates = field(default_factory=lambda: PromptTemplates(prompt_template=""))
     prompt_options: PromptOptions = field(default_factory=lambda: PromptOptions(prompt=""))
+    test: str = ""
