@@ -17,7 +17,7 @@ class GoogleAIClient(CommonClient):
         if not self.model:
             self.model = genai.GenerativeModel(model_name=model_name)
 
-        max_retries = 3
+        max_retries = 5
         current_retry = 0
 
         while current_retry < max_retries:
