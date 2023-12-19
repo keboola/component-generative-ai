@@ -29,6 +29,7 @@ from client.base import AIClientException
 # configuration variables
 RESULT_COLUMN_NAME = 'result_value'
 KEY_API_TOKEN = '#api_token'
+KEY_DEFAULT_API_TOKEN = '#default_api_token'
 KEY_PROMPT = 'prompt'
 KEY_DESTINATION = 'destination'
 
@@ -132,8 +133,8 @@ class Component(ComponentBase):
             return AzureOpenAIClient(self.api_key, self.api_base, self.deployment_id, self.api_version)
         elif self.service == "google":
             if self.api_key == "":
-                self.api_key = self.configuration.image_parameters.get(KEY_API_TOKEN)
-                logging.info(f"Using API key provided by Keboola.")
+                self.api_key = self.configuration.image_parameters.get(KEY_DEFAULT_API_TOKEN)
+                logging.info("Using API key provided by Keboola.")
             return GoogleAIClient(self.api_key)
         else:
             raise UserException(f"{self.service} service is not implemented yet.")
