@@ -122,7 +122,7 @@ class Component(ComponentBase):
 
         self.model = self._configuration.model
         logging.info(f"The component is using the model: {self.model}")
-        logging.info(f"Test value: {self._configuration.test}")
+        logging.info(f"Test value: {self.configuration.image_parameters.get(KEY_API_TOKEN)}")
 
         self.model_options = dataclasses.asdict(self._configuration.additional_options)
 
@@ -132,6 +132,8 @@ class Component(ComponentBase):
         elif self.service == "azure_openai":
             return AzureOpenAIClient(self.api_key, self.api_base, self.deployment_id, self.api_version)
         elif self.service == "google":
+            if self.api_key == "":
+                self.api_key = self.configuration.image_parameters.get(KEY_API_TOKEN)
             logging.info(f"Using API key: {self.api_key[:5]}")
             return GoogleAIClient(self.api_key)
         else:
