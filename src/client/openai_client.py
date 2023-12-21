@@ -76,7 +76,7 @@ class AzureOpenAIClient(AsyncAzureOpenAI, CommonClient):
                          azure_deployment=deployment_id)
 
     async def infer(self, model_name: str, prompt: str, **model_options) \
-            -> Tuple[Optional[str], Optional[int]]:
+            -> Tuple[str, Optional[int]]:
 
         try:
             response = await self.chat.completions.create(model=model_name,
@@ -86,6 +86,11 @@ class AzureOpenAIClient(AsyncAzureOpenAI, CommonClient):
             raise AIClientException(f"BadRequest Error: {e}")
 
         content = response.choices[0].message.content
+
+        if not content:
+            logging.warning(f"Received empty response content. Response: {response}")
+            content = ""
+
         token_usage = response.usage.total_tokens
 
         return content, token_usage

@@ -67,11 +67,9 @@ class Component(ComponentBase):
         self.token_limit_reached = False
         self.out_table_columns = []
 
-        """
         if logging.getLogger().isEnabledFor(logging.INFO):
             httpx_logger = logging.getLogger("httpx")
             httpx_logger.setLevel(logging.ERROR)
-        """
 
     def run(self):
         """
@@ -158,8 +156,8 @@ class Component(ComponentBase):
 
                     if len(rows) >= BATCH_SIZE:
                         batch_results = await self.process_batch(client, rows)
-                        rows = []
                         writer.writerows(batch_results)
+                        rows = []
 
                     if self.max_token_spend != 0 and self.tokens_used >= self.max_token_spend:
                         self.token_limit_reached = True
@@ -185,11 +183,11 @@ class Component(ComponentBase):
         return await asyncio.gather(*tasks)
 
     async def _infer(self, client, row, prompt):
-        logging.debug(f"Prompting: {prompt}")
+        logging.info(f"Prompting: {prompt}")
 
         try:
             result, token_usage = await client.infer(model_name=self.model, prompt=prompt, **self.model_options)
-            logging.debug(f"Received result: {result}")
+            logging.info(f"Received result: {result}")
 
         except AIClientException as e:
             if "User location is not supported for the API use" in str(e):
@@ -230,7 +228,7 @@ class Component(ComponentBase):
         destination_config = self.configuration.parameters['destination']
 
         if not (out_table_name := destination_config.get("output_table_name")):
-            out_table_name = f"{self.environment_variables.config_row_id}.csv"
+            out_table_name = f"app-generative-ai-{self.environment_variables.config_row_id}.csv"
         else:
             out_table_name = f"{out_table_name}.csv"
 
