@@ -156,8 +156,8 @@ class Component(ComponentBase):
 
                     if len(rows) >= BATCH_SIZE:
                         batch_results = await self.process_batch(client, rows)
-                        rows = []
                         writer.writerows(batch_results)
+                        rows = []
 
                     if self.max_token_spend != 0 and self.tokens_used >= self.max_token_spend:
                         self.token_limit_reached = True
@@ -183,8 +183,10 @@ class Component(ComponentBase):
         return await asyncio.gather(*tasks)
 
     async def _infer(self, client, row, prompt):
+
         try:
             result, token_usage = await client.infer(model_name=self.model, prompt=prompt, **self.model_options)
+
         except AIClientException as e:
             if "User location is not supported for the API use" in str(e):
                 raise UserException("Google AI services are only available on US stack.")
@@ -224,7 +226,7 @@ class Component(ComponentBase):
         destination_config = self.configuration.parameters['destination']
 
         if not (out_table_name := destination_config.get("output_table_name")):
-            out_table_name = f"{self.environment_variables.config_row_id}.csv"
+            out_table_name = f"app-generative-ai-{self.environment_variables.config_row_id}.csv"
         else:
             out_table_name = f"{out_table_name}.csv"
 
@@ -253,6 +255,10 @@ class Component(ComponentBase):
     def _get_input_table(self) -> TableDefinition:
         if not self.get_input_tables_definitions():
             raise UserException("No input table specified. Please provide one input table in the input mapping!")
+
+        if len(self.get_input_tables_definitions()) > 1:
+            raise UserException("Only one input table is supported")
+
         return self.get_input_tables_definitions()[0]
 
     def add_flag_to_manifest(self):

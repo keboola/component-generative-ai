@@ -34,6 +34,7 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
         except openai.OpenAIError:
             logging.warning(f"Cannot use chat_completion endpoint for model {model_name}, the component will try to use"
                             f"completion_result endpoint.")
+
         try:
             await self.get_completion_result(model_name, "This is a test prompt.", timeout=60,
                                              max_tokens=20)
@@ -43,6 +44,7 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
 
     async def get_completion_result(self, model_name: str, prompt: str, **model_options) \
             -> Tuple[Optional[str], Optional[int]]:
+
         response = await self.completions.create(model=model_name, prompt=prompt, **model_options)
 
         content = response.choices[0].text
@@ -52,6 +54,7 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
 
     async def get_chat_completion_result(self, model_name: str, prompt: str, **model_options) \
             -> Tuple[Optional[str], Optional[int]]:
+
         response = await self.chat.completions.create(model=model_name,
                                                       messages=[{"role": "user", "content": prompt}], **model_options)
 
@@ -73,7 +76,8 @@ class AzureOpenAIClient(AsyncAzureOpenAI, CommonClient):
                          azure_deployment=deployment_id)
 
     async def infer(self, model_name: str, prompt: str, **model_options) \
-            -> Tuple[Optional[str], Optional[int]]:
+            -> Tuple[str, Optional[int]]:
+
         try:
             response = await self.chat.completions.create(model=model_name,
                                                           messages=[{"role": "user", "content": prompt}],
@@ -82,6 +86,13 @@ class AzureOpenAIClient(AsyncAzureOpenAI, CommonClient):
             raise AIClientException(f"BadRequest Error: {e}")
 
         content = response.choices[0].message.content
+        if not content:
+            if response.choices[0].finish_reason == "content_filter":
+                raise AIClientException(f"Cannot process prompt: {prompt}\nReason: content_filter\n"
+                                        f"For more information visit https://learn.microsoft.com/en-us/azure/"
+                                        f"ai-services/openai/concepts/content-filter?tabs=warning%2Cpython")
+            content = ""
+
         token_usage = response.usage.total_tokens
 
         return content, token_usage
