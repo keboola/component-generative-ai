@@ -183,11 +183,9 @@ class Component(ComponentBase):
         return await asyncio.gather(*tasks)
 
     async def _infer(self, client, row, prompt):
-        logging.info(f"Prompting: {prompt}")
 
         try:
             result, token_usage = await client.infer(model_name=self.model, prompt=prompt, **self.model_options)
-            logging.info(f"Received result: {result}")
 
         except AIClientException as e:
             if "User location is not supported for the API use" in str(e):
