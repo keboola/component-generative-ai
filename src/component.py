@@ -157,8 +157,6 @@ class Component(ComponentBase):
                     if len(rows) >= BATCH_SIZE:
                         batch_results = await self.process_batch(client, rows)
                         rows = []
-                        print(batch_results)
-                        exit()
                         writer.writerows(batch_results)
 
                     if self.max_token_spend != 0 and self.tokens_used >= self.max_token_spend:
