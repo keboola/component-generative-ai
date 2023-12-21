@@ -86,9 +86,11 @@ class AzureOpenAIClient(AsyncAzureOpenAI, CommonClient):
             raise AIClientException(f"BadRequest Error: {e}")
 
         content = response.choices[0].message.content
-
         if not content:
-            logging.warning(f"Received empty response content. Response: {response}")
+            if response.choices[0].finish_reason == "content_filter":
+                raise AIClientException(f"Cannot process prompt: {prompt}\nReason: content_filter\n"
+                                        f"For more information visit https://learn.microsoft.com/en-us/azure/"
+                                        f"ai-services/openai/concepts/content-filter?tabs=warning%2Cpython")
             content = ""
 
         token_usage = response.usage.total_tokens
