@@ -67,9 +67,11 @@ class Component(ComponentBase):
         self.token_limit_reached = False
         self.out_table_columns = []
 
+        """
         if logging.getLogger().isEnabledFor(logging.INFO):
             httpx_logger = logging.getLogger("httpx")
             httpx_logger.setLevel(logging.ERROR)
+        """
 
     def run(self):
         """
