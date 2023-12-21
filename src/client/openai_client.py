@@ -34,6 +34,7 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
         except openai.OpenAIError:
             logging.warning(f"Cannot use chat_completion endpoint for model {model_name}, the component will try to use"
                             f"completion_result endpoint.")
+
         try:
             await self.get_completion_result(model_name, "This is a test prompt.", timeout=60,
                                              max_tokens=20)
@@ -43,7 +44,12 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
 
     async def get_completion_result(self, model_name: str, prompt: str, **model_options) \
             -> Tuple[Optional[str], Optional[int]]:
+
+        logging.debug(f"Prompting: {prompt}")
+
         response = await self.completions.create(model=model_name, prompt=prompt, **model_options)
+
+        logging.debug(f"Received response: {response}")
 
         content = response.choices[0].text
         token_usage = response.usage.total_tokens
@@ -52,8 +58,13 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
 
     async def get_chat_completion_result(self, model_name: str, prompt: str, **model_options) \
             -> Tuple[Optional[str], Optional[int]]:
+
+        logging.debug(f"Prompting: {prompt}")
+
         response = await self.chat.completions.create(model=model_name,
                                                       messages=[{"role": "user", "content": prompt}], **model_options)
+
+        logging.debug(f"Received response: {response}")
 
         content = response.choices[0].message.content
         token_usage = response.usage.total_tokens
@@ -74,12 +85,17 @@ class AzureOpenAIClient(AsyncAzureOpenAI, CommonClient):
 
     async def infer(self, model_name: str, prompt: str, **model_options) \
             -> Tuple[Optional[str], Optional[int]]:
+
+        logging.debug(f"Prompting: {prompt}")
+
         try:
             response = await self.chat.completions.create(model=model_name,
                                                           messages=[{"role": "user", "content": prompt}],
                                                           **model_options)
         except openai.BadRequestError as e:
             raise AIClientException(f"BadRequest Error: {e}")
+
+        logging.debug(f"Received response: {response}")
 
         content = response.choices[0].message.content
         token_usage = response.usage.total_tokens

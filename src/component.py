@@ -157,6 +157,8 @@ class Component(ComponentBase):
                     if len(rows) >= BATCH_SIZE:
                         batch_results = await self.process_batch(client, rows)
                         rows = []
+                        print(batch_results)
+                        exit()
                         writer.writerows(batch_results)
 
                     if self.max_token_spend != 0 and self.tokens_used >= self.max_token_spend:
@@ -253,6 +255,10 @@ class Component(ComponentBase):
     def _get_input_table(self) -> TableDefinition:
         if not self.get_input_tables_definitions():
             raise UserException("No input table specified. Please provide one input table in the input mapping!")
+
+        if len(self.get_input_tables_definitions()) > 1:
+            raise UserException("Only one input table is supported")
+
         return self.get_input_tables_definitions()[0]
 
     def add_flag_to_manifest(self):
