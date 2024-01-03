@@ -77,6 +77,9 @@ class Component(ComponentBase):
         """
         self.init_configuration()
 
+        self.test_prompt()
+        exit()
+
         client = self.get_client()
 
         input_table, out_table = self.prepare_tables()
@@ -326,6 +329,8 @@ class Component(ComponentBase):
 
     def _get_storage_source(self) -> str:
         storage_config = self.configuration.config_data.get("storage")
+        if not storage_config.get("input", {}).get("tables"):
+            raise UserException("Input table must be specified.")
         source = storage_config["input"]["tables"][0]["source"]
         return source
 
