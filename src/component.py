@@ -77,13 +77,8 @@ class Component(ComponentBase):
         """
         self.init_configuration()
 
-        self.test_prompt()
-        exit()
-
         client = self.get_client()
-
         input_table, out_table = self.prepare_tables()
-
         self.table_rows = self.count_rows(input_table.full_path)
 
         asyncio.run(self.process_prompts(client, input_table, out_table))
