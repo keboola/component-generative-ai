@@ -78,9 +78,7 @@ class Component(ComponentBase):
         self.init_configuration()
 
         client = self.get_client()
-
         input_table, out_table = self.prepare_tables()
-
         self.table_rows = self.count_rows(input_table.full_path)
 
         asyncio.run(self.process_prompts(client, input_table, out_table))
@@ -144,9 +142,6 @@ class Component(ComponentBase):
         with open(input_table.full_path, 'r') as input_file:
             reader = csv.DictReader(input_file)
 
-            # Skip the header row
-            next(reader, None)
-
             with open(out_table.full_path, 'w+') as out_file:
                 writer = csv.DictWriter(out_file, fieldnames=self.out_table_columns)
                 writer.writeheader()
@@ -188,9 +183,13 @@ class Component(ComponentBase):
             result, token_usage = await client.infer(model_name=self.model, prompt=prompt, **self.model_options)
 
         except AIClientException as e:
-            if "User location is not supported for the API use" in str(e):
-                raise UserException("Google AI services are only available on US stack.")
-            raise UserException(f"Error occured while calling AI API: {e}")
+            if not self.queue_v2:
+                if "User location is not supported for the API use" in str(e):
+                    raise UserException("Google AI services are only available on US stack.")
+                raise UserException(f"Error occured while calling AI API: {e}")
+
+            logging.warning(f"Failed to process row {row}, reason: {e}.")
+            return self._build_output_row(row, str(e))
 
         self.tokens_used += token_usage
         logging.debug(f"Tokens spend: {self.tokens_used}")
@@ -326,6 +325,8 @@ class Component(ComponentBase):
 
     def _get_storage_source(self) -> str:
         storage_config = self.configuration.config_data.get("storage")
+        if not storage_config.get("input", {}).get("tables"):
+            raise UserException("Input table must be specified.")
         source = storage_config["input"]["tables"][0]["source"]
         return source
 
