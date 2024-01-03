@@ -13,6 +13,7 @@ def on_giveup(details: dict):
 class OpenAIClient(AsyncOpenAI, CommonClient):
     """
     Implements OpenAI and AzureOpenAI clients.
+    TODO: Implement try except using wrapper.
     """
 
     def __init__(self, api_key: str):
