@@ -142,9 +142,6 @@ class Component(ComponentBase):
         with open(input_table.full_path, 'r') as input_file:
             reader = csv.DictReader(input_file)
 
-            # Skip the header row
-            next(reader, None)
-
             with open(out_table.full_path, 'w+') as out_file:
                 writer = csv.DictWriter(out_file, fieldnames=self.out_table_columns)
                 writer.writeheader()
