@@ -43,9 +43,12 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
             raise AIClientException(f"The component is unable to use model {model_name}. Please check your API key.")
 
     async def get_completion_result(self, model_name: str, prompt: str, **model_options) \
-            -> Tuple[Optional[str], Optional[int]]:
+            -> Tuple[str, Optional[int]]:
 
-        response = await self.completions.create(model=model_name, prompt=prompt, **model_options)
+        try:
+            response = await self.completions.create(model=model_name, prompt=prompt, **model_options)
+        except openai.OpenAIError as e:
+            raise AIClientException(f"Encountered OpenAIError: {e}")
 
         content = response.choices[0].text
         token_usage = response.usage.total_tokens
@@ -55,8 +58,12 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
     async def get_chat_completion_result(self, model_name: str, prompt: str, **model_options) \
             -> Tuple[Optional[str], Optional[int]]:
 
-        response = await self.chat.completions.create(model=model_name,
-                                                      messages=[{"role": "user", "content": prompt}], **model_options)
+        try:
+            response = await self.chat.completions.create(model=model_name,
+                                                          messages=[{"role": "user", "content": prompt}],
+                                                          **model_options)
+        except openai.OpenAIError as e:
+            raise AIClientException(f"Encountered OpenAIError: {e}")
 
         content = response.choices[0].message.content
         token_usage = response.usage.total_tokens
@@ -75,8 +82,7 @@ class AzureOpenAIClient(AsyncAzureOpenAI, CommonClient):
                          azure_endpoint=api_base,
                          azure_deployment=deployment_id)
 
-    async def infer(self, model_name: str, prompt: str, **model_options) \
-            -> Tuple[str, Optional[int]]:
+    async def infer(self, model_name: str, prompt: str, **model_options) -> Tuple[str, Optional[int]]:
 
         try:
             response = await self.chat.completions.create(model=model_name,
@@ -84,6 +90,8 @@ class AzureOpenAIClient(AsyncAzureOpenAI, CommonClient):
                                                           **model_options)
         except openai.BadRequestError as e:
             raise AIClientException(f"BadRequest Error: {e}")
+        except openai.OpenAIError as e:
+            raise AIClientException(f"Encountered OpenAIError: {e}")
 
         content = response.choices[0].message.content
         if not content:
