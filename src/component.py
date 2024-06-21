@@ -29,7 +29,7 @@ from client.base import AIClientException
 # configuration variables
 RESULT_COLUMN_NAME = 'result_value'
 KEY_API_TOKEN = '#api_token'
-#KEY_DEFAULT_API_TOKEN = 'default_api_token'
+KEY_DEFAULT_API_TOKEN = '#default_api_token'
 KEY_PROMPT = 'prompt'
 KEY_DESTINATION = 'destination'
 
