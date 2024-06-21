@@ -142,7 +142,7 @@ class Component(ComponentBase):
 
     async def process_prompts(self, client, input_table, out_table) -> None:
 
-        with open(input_table.full_path, 'r') as input_file:
+        with open(input_table.full_path, 'r', encoding='utf-8') as input_file:
             reader = csv.DictReader(input_file)
 
             with open(out_table.full_path, 'w+') as out_file:
@@ -354,7 +354,7 @@ class Component(ComponentBase):
     def count_rows(file_path):
         with open(file_path, 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
-            row_count = sum(1 for row in reader)-1
+            row_count = sum(1 for _ in reader)-1
         return row_count
 
     @sync_action('listPkeys')
