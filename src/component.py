@@ -25,6 +25,7 @@ from configuration import Configuration
 from client.openai_client import OpenAIClient, AzureOpenAIClient
 from client.googleai_client import GoogleAIClient
 from client.base import AIClientException
+from client.huggingface_client import HuggingfaceClient
 
 # configuration variables
 RESULT_COLUMN_NAME = 'result_value'
@@ -134,6 +135,8 @@ class Component(ComponentBase):
                 self.api_key = self.configuration.image_parameters.get(KEY_DEFAULT_API_TOKEN)
                 logging.info("Using API key provided by Keboola.")
             return GoogleAIClient(self.api_key)
+        elif self.service == "huggingface":
+            return HuggingfaceClient(self.api_key)
         else:
             raise UserException(f"{self.service} service is not implemented yet.")
 

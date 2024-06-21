@@ -16,6 +16,7 @@
             "openai",
             "azure_openai",
             "google",
+            "huggingface",
             "llama_2"
           ],
           "default": "open_ai",
@@ -24,6 +25,7 @@
               "OpenAI",
               "Azure OpenAI",
               "Google (Only available on US stack)",
+              "Hugging Face",
               "Llama 2 (not implemented yet)"
             ]
           },
