@@ -28,6 +28,10 @@ For information on retrieving your API key, API Base, and Deployment ID, refer t
 - Only works on US AWS stack – connection.keboola.com
 - Default API Key for this service is provided by Keboola. 
 
+#### AI Service Provider: Hugging Face
+
+- API key is Provided by Keboola
+
 ### Other options:
 
 - **Model (`prompt`)** You can use the sync action to load available models for your account.

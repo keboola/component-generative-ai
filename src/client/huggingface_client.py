@@ -10,7 +10,8 @@ from keboola.http_client import AsyncHttpClient
 SUPPORTED_MODELS = {
     "mistral-7b-instruct-v0-1-fep": "https://qwiarbdt0vaeh0cb.us-east-1.aws.endpoints.huggingface.cloud",
     "gemma-7b-it-voa": "https://yi9ctuuxjnmgtjkc.us-east-1.aws.endpoints.huggingface.cloud",
-    "meta-llama-3-8b-noz": "https://nbd6y80gxtows9b3.us-east-1.aws.endpoints.huggingface.cloud"
+    "meta-llama-3-8b-noz": "https://nbd6y80gxtows9b3.us-east-1.aws.endpoints.huggingface.cloud",
+    "custom": "custom"
 }
 
 

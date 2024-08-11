@@ -20,6 +20,18 @@
         }
       }
     },
+    "endpoint_url": {
+      "type": "string",
+      "title": "Endpoint URL",
+      "enum": [],
+      "description": "You can find the endpoint url in your <a href=\"https://ui.endpoints.huggingface.co/\">HuggingFace web console.</a>",
+      "propertyOrder": 2,
+      "options": {
+        "dependencies": {
+          "model": "custom"
+        }
+      }
+    },
     "additional_options": {
       "type": "object",
       "title": "Model Options",
