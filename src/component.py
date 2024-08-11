@@ -142,7 +142,7 @@ class Component(ComponentBase):
 
     async def process_prompts(self, client, input_table, out_table) -> None:
 
-        with open(input_table.full_path, 'r', encoding='utf-8') as input_file:
+        with open(input_table.full_path, 'r') as input_file:
             reader = csv.DictReader(input_file)
 
             with open(out_table.full_path, 'w+') as out_file:
