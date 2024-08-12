@@ -4,19 +4,18 @@ from typing import Optional, Tuple
 from .base import CommonClient, AIClientException
 from httpx import HTTPStatusError
 
-
 from keboola.http_client import AsyncHttpClient
 
 SUPPORTED_MODELS = {
     "mistral-7b-instruct-v0-1-fep": "https://qwiarbdt0vaeh0cb.us-east-1.aws.endpoints.huggingface.cloud",
     "gemma-7b-it-voa": "https://yi9ctuuxjnmgtjkc.us-east-1.aws.endpoints.huggingface.cloud",
-    "meta-llama-3-8b-noz": "https://nbd6y80gxtows9b3.us-east-1.aws.endpoints.huggingface.cloud",
-    "custom": "custom"
+    "meta-llama-3-8b-noz": "https://nbd6y80gxtows9b3.us-east-1.aws.endpoints.huggingface.cloud"
 }
 
 
 class IsSleepingException(Exception):
-    pass
+    logging.warning("The model is currently sleeping. The component will now wait "
+                    "for the model to wake up.")
 
 
 class HuggingfaceClient(CommonClient):
@@ -29,7 +28,7 @@ class HuggingfaceClient(CommonClient):
         }
 
     async def infer(self, model_name: str, prompt: str, **model_options) -> Tuple[Optional[str], Optional[int]]:
-        if model_name not in SUPPORTED_MODELS:
+        if model_name not in SUPPORTED_MODELS and model_name != "custom":
             raise AIClientException(f"Model {model_name} is not supported. "
                                     f"Supported models: {list(SUPPORTED_MODELS.keys())}")
 
@@ -63,8 +62,6 @@ class HuggingfaceClient(CommonClient):
             result = await self.client.post(endpoint, json=data)
         except HTTPStatusError as e:
             if self._is_asleep(e.response.status_code):
-                logging.warning("The model is currently sleeping. The component will now wait "
-                                "for the model to wake up.")
                 raise IsSleepingException()
             else:
                 raise AIClientException(f"HTTP error occurred: {e.response.status_code} {e.response.reason_phrase}")

@@ -30,13 +30,15 @@ from client.huggingface_client import HuggingfaceClient
 # configuration variables
 RESULT_COLUMN_NAME = 'result_value'
 KEY_API_TOKEN = '#api_token'
-KEY_DEFAULT_API_TOKEN = 'default_api_token'
 KEY_PROMPT = 'prompt'
 KEY_DESTINATION = 'destination'
 
+KEY_DEFAULT_API_TOKEN = '#default_api_token'
+KEY_DEFAULT_API_TOKEN_HUGGINGFACE = '#default_api_token_huggingface'
+
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
-REQUIRED_PARAMETERS = [KEY_API_TOKEN, KEY_PROMPT, KEY_DESTINATION]
+REQUIRED_PARAMETERS = [KEY_PROMPT, KEY_DESTINATION]
 
 PREVIEW_LIMIT = 5
 BATCH_SIZE = 10
@@ -136,6 +138,8 @@ class Component(ComponentBase):
                 logging.info("Using API key provided by Keboola.")
             return GoogleAIClient(self.api_key)
         elif self.service == "huggingface":
+            if not self.api_key:
+                self.api_key = self.configuration.image_parameters.get(KEY_DEFAULT_API_TOKEN_HUGGINGFACE)
             return HuggingfaceClient(self.api_key)
         else:
             raise UserException(f"{self.service} service is not implemented yet.")
@@ -442,7 +446,7 @@ class Component(ComponentBase):
     def list_models(self):
         authentication = self.configuration.parameters.get("authentication")
         self.service = authentication.get("service")
-        self.api_key = authentication.get("#api_token")
+        self.api_key = authentication.get(KEY_API_TOKEN)
 
         if self.service == "azure_openai":
             self.api_base = authentication.get("api_base")
