@@ -66,7 +66,6 @@ class AdditionalOptions(ConfigurationBase):
 class Authentication(ConfigurationBase):
     service: str
     pswd_api_token: str
-    api_token: str = ""  # stack parameter
     api_base: str = ""
     deployment_id: str = ""
     api_version: str = ""
