@@ -163,7 +163,7 @@
     },
     "max_token_spend": {
       "title": "Maximum token spend (Optional)",
-      "description": "If set to value greater than 0, the component will stop processing rows after reaching the limit of allowed tokens.",
+      "description": "If set to value greater than 0, the component will stop processing rows after reaching the limit of allowed tokens. This is only supported for OpenAI Service.",
       "default": 0,
       "type": "integer",
       "propertyOrder": 40

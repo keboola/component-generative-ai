@@ -14,8 +14,7 @@ SUPPORTED_MODELS = {
 
 
 class IsSleepingException(Exception):
-    logging.warning("The model is currently sleeping. The component will now wait "
-                    "for the model to wake up.")
+    pass
 
 
 class HuggingfaceClient(CommonClient):
@@ -62,6 +61,8 @@ class HuggingfaceClient(CommonClient):
             result = await self.client.post(endpoint, json=data)
         except HTTPStatusError as e:
             if self._is_asleep(e.response.status_code):
+                logging.warning("The model is currently sleeping. The component will now wait "
+                                "for the model to wake up.")
                 raise IsSleepingException()
             else:
                 raise AIClientException(f"HTTP error occurred: {e.response.status_code} {e.response.reason_phrase}")

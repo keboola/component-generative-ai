@@ -140,6 +140,7 @@ class Component(ComponentBase):
         elif self.service == "huggingface":
             if not self.api_key:
                 self.api_key = self.configuration.image_parameters.get(KEY_DEFAULT_API_TOKEN_HUGGINGFACE)
+                logging.info("Using API key provided by Keboola.")
             return HuggingfaceClient(self.api_key)
         else:
             raise UserException(f"{self.service} service is not implemented yet.")
