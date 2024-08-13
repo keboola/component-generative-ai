@@ -27,7 +27,7 @@
       "propertyOrder": 2,
       "options": {
         "dependencies": {
-          "model": "custom"
+          "model": "custom_model"
         }
       }
     },

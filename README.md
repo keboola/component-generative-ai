@@ -34,7 +34,7 @@ For information on retrieving your API key, API Base, and Deployment ID, refer t
 - If you want to use a custom model, you need to provide your own API key.
 
 - **API Key (`#api_token`)**
-- **API Key (`endpoint_url`)** - You can find the endpoint url in your <a href="https://ui.endpoints.huggingface.co/">HuggingFace web console.</a>
+- **API Key (`endpoint_url`)** - You can use any endpoint url from your <a href="https://ui.endpoints.huggingface.co/">HuggingFace web console.</a> or a serverless deployment.
 
 ### Other options:
 
