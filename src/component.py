@@ -467,7 +467,7 @@ class Component(ComponentBase):
     async def _list_models(client):
         models = await client.list_models()
         result = [{"value": m, "label": m} for m in models]
-        result.append({"value": "custom", "label": "Custom Model"})
+        result.append({"value": "custom_model", "label": "Custom Model"})
         return result
 
 

@@ -73,7 +73,7 @@ class HuggingfaceClient(CommonClient):
         return result[0]['generated_text']
 
     def _get_base_url(self, model_name: str) -> str:
-        if model_name == "custom":
+        if model_name == "custom_model":
             if not self.endpoint_url:
                 raise AIClientException("Custom model requires endpoint_url")
             base_url = self.endpoint_url
