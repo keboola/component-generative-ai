@@ -36,6 +36,8 @@ KEY_DESTINATION = 'destination'
 KEY_DEFAULT_API_TOKEN = '#default_api_token'
 KEY_DEFAULT_API_TOKEN_HUGGINGFACE = '#default_api_token_huggingface'
 
+KEY_ENDPOINT_URL = 'endpoint_url'
+
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
 REQUIRED_PARAMETERS = [KEY_PROMPT, KEY_DESTINATION]
@@ -130,18 +132,22 @@ class Component(ComponentBase):
     def get_client(self):
         if self.service == "openai":
             return OpenAIClient(api_key=self.api_key)
+
         elif self.service == "azure_openai":
             return AzureOpenAIClient(self.api_key, self.api_base, self.deployment_id, self.api_version)
+
         elif self.service == "google":
             if self.api_key == "":
                 self.api_key = self.configuration.image_parameters.get(KEY_DEFAULT_API_TOKEN)
                 logging.info("Using API key provided by Keboola.")
             return GoogleAIClient(self.api_key)
+
         elif self.service == "huggingface":
             if not self.api_key and self.model != "custom":
                 self.api_key = self.configuration.image_parameters.get(KEY_DEFAULT_API_TOKEN_HUGGINGFACE)
                 logging.info("Using API key provided by Keboola.")
-            return HuggingfaceClient(self.api_key)
+            return HuggingfaceClient(self.api_key, endpoint_url=self.configuration.parameters.get(KEY_ENDPOINT_URL))
+
         else:
             raise UserException(f"{self.service} service is not implemented yet.")
 
