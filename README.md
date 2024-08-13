@@ -30,7 +30,11 @@ For information on retrieving your API key, API Base, and Deployment ID, refer t
 
 #### AI Service Provider: Hugging Face
 
-- API key is Provided by Keboola
+- API key is Provided by Keboola if one of the predefined models is used.
+- If you want to use a custom model, you need to provide your own API key.
+
+- **API Key (`#api_token`)**
+- **API Key (`endpoint_url`)** - You can find the endpoint url in your <a href="https://ui.endpoints.huggingface.co/">HuggingFace web console.</a>
 
 ### Other options:
 

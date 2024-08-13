@@ -18,8 +18,9 @@ class IsSleepingException(Exception):
 
 
 class HuggingfaceClient(CommonClient):
-    def __init__(self, api_key):
+    def __init__(self, api_key: str, endpoint_url: str = ""):
         self.client = None
+        self.endpoint_url = endpoint_url
         self.headers = {
             'Accept': 'application/json',
             'Authorization': f'Bearer {api_key}',
@@ -32,7 +33,9 @@ class HuggingfaceClient(CommonClient):
                                     f"Supported models: {list(SUPPORTED_MODELS.keys())}")
 
         if not self.client:
-            self.client = AsyncHttpClient(base_url=SUPPORTED_MODELS[model_name], default_headers=self.headers,
+
+            base_url = self._get_base_url(model_name)
+            self.client = AsyncHttpClient(base_url=base_url, default_headers=self.headers,
                                           max_requests_per_second=1)
 
         max_new_tokens = model_options.get("max_tokens")
@@ -68,6 +71,20 @@ class HuggingfaceClient(CommonClient):
                 raise AIClientException(f"HTTP error occurred: {e.response.status_code} {e.response.reason_phrase}")
 
         return result[0]['generated_text']
+
+    def _get_base_url(self, model_name: str) -> str:
+        if model_name == "custom":
+            if not self.endpoint_url:
+                raise AIClientException("Custom model requires endpoint_url")
+            base_url = self.endpoint_url
+        else:
+            try:
+                base_url = SUPPORTED_MODELS[model_name]
+            except KeyError:
+                raise AIClientException(f"Model {model_name} is not supported. "
+                                        f"Supported models: {list(SUPPORTED_MODELS.keys())}")
+
+        return base_url
 
     @staticmethod
     def _is_asleep(status_code: int) -> bool:

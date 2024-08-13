@@ -87,6 +87,7 @@ class Configuration(ConfigurationBase):
     additional_options: AdditionalOptions
     authentication: Authentication
     model: str
+    endpoint_url: str = ""
     debug: bool = False
     max_token_spend: int = 0
     prompt_templates: PromptTemplates = field(default_factory=lambda: PromptTemplates(prompt_template=""))

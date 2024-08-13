@@ -138,7 +138,7 @@ class Component(ComponentBase):
                 logging.info("Using API key provided by Keboola.")
             return GoogleAIClient(self.api_key)
         elif self.service == "huggingface":
-            if not self.api_key:
+            if not self.api_key and self.model != "custom":
                 self.api_key = self.configuration.image_parameters.get(KEY_DEFAULT_API_TOKEN_HUGGINGFACE)
                 logging.info("Using API key provided by Keboola.")
             return HuggingfaceClient(self.api_key)
@@ -460,7 +460,9 @@ class Component(ComponentBase):
     @staticmethod
     async def _list_models(client):
         models = await client.list_models()
-        return [{"value": m, "label": m} for m in models]
+        result = [{"value": m, "label": m} for m in models]
+        result.append({"value": "custom", "label": "Custom Model (API Key not provided by Keboola)"})
+        return result
 
 
 """
