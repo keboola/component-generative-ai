@@ -66,7 +66,6 @@ class AdditionalOptions(ConfigurationBase):
 class Authentication(ConfigurationBase):
     service: str
     pswd_api_token: str
-    api_token: str = ""  # stack parameter
     api_base: str = ""
     deployment_id: str = ""
     api_version: str = ""
@@ -88,6 +87,7 @@ class Configuration(ConfigurationBase):
     additional_options: AdditionalOptions
     authentication: Authentication
     model: str
+    endpoint_url: str = ""
     debug: bool = False
     max_token_spend: int = 0
     prompt_templates: PromptTemplates = field(default_factory=lambda: PromptTemplates(prompt_template=""))

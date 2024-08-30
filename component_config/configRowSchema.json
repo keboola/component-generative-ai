@@ -20,6 +20,17 @@
         }
       }
     },
+    "endpoint_url": {
+      "type": "string",
+      "title": "Endpoint URL",
+      "description": "You can find the endpoint url in your <a href=\"https://ui.endpoints.huggingface.co/\">HuggingFace web console.</a>",
+      "propertyOrder": 2,
+      "options": {
+        "dependencies": {
+          "model": "custom_model"
+        }
+      }
+    },
     "additional_options": {
       "type": "object",
       "title": "Model Options",
@@ -152,7 +163,7 @@
     },
     "max_token_spend": {
       "title": "Maximum token spend (Optional)",
-      "description": "If set to value greater than 0, the component will stop processing rows after reaching the limit of allowed tokens.",
+      "description": "If set to value greater than 0, the component will stop processing rows after reaching the limit of allowed tokens. This is only supported for OpenAI Service.",
       "default": 0,
       "type": "integer",
       "propertyOrder": 40

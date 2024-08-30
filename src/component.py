@@ -25,17 +25,22 @@ from configuration import Configuration
 from client.openai_client import OpenAIClient, AzureOpenAIClient
 from client.googleai_client import GoogleAIClient
 from client.base import AIClientException
+from client.huggingface_client import HuggingfaceClient
 
 # configuration variables
 RESULT_COLUMN_NAME = 'result_value'
 KEY_API_TOKEN = '#api_token'
-KEY_DEFAULT_API_TOKEN = '#default_api_token'
 KEY_PROMPT = 'prompt'
 KEY_DESTINATION = 'destination'
 
+KEY_DEFAULT_API_TOKEN = '#default_api_token'
+KEY_DEFAULT_API_TOKEN_HUGGINGFACE = '#default_api_token_huggingface'
+
+KEY_ENDPOINT_URL = 'endpoint_url'
+
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
-REQUIRED_PARAMETERS = [KEY_API_TOKEN, KEY_PROMPT, KEY_DESTINATION]
+REQUIRED_PARAMETERS = [KEY_PROMPT, KEY_DESTINATION]
 
 PREVIEW_LIMIT = 5
 BATCH_SIZE = 10
@@ -127,13 +132,22 @@ class Component(ComponentBase):
     def get_client(self):
         if self.service == "openai":
             return OpenAIClient(api_key=self.api_key)
+
         elif self.service == "azure_openai":
             return AzureOpenAIClient(self.api_key, self.api_base, self.deployment_id, self.api_version)
+
         elif self.service == "google":
             if self.api_key == "":
                 self.api_key = self.configuration.image_parameters.get(KEY_DEFAULT_API_TOKEN)
                 logging.info("Using API key provided by Keboola.")
             return GoogleAIClient(self.api_key)
+
+        elif self.service == "huggingface":
+            if not self.api_key and self.model != "custom":
+                self.api_key = self.configuration.image_parameters.get(KEY_DEFAULT_API_TOKEN_HUGGINGFACE)
+                logging.info("Using API key provided by Keboola.")
+            return HuggingfaceClient(self.api_key, endpoint_url=self.configuration.parameters.get(KEY_ENDPOINT_URL))
+
         else:
             raise UserException(f"{self.service} service is not implemented yet.")
 
@@ -351,7 +365,7 @@ class Component(ComponentBase):
     def count_rows(file_path):
         with open(file_path, 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
-            row_count = sum(1 for row in reader)-1
+            row_count = sum(1 for _ in reader)-1
         return row_count
 
     @sync_action('listPkeys')
@@ -439,7 +453,7 @@ class Component(ComponentBase):
     def list_models(self):
         authentication = self.configuration.parameters.get("authentication")
         self.service = authentication.get("service")
-        self.api_key = authentication.get("#api_token")
+        self.api_key = authentication.get(KEY_API_TOKEN)
 
         if self.service == "azure_openai":
             self.api_base = authentication.get("api_base")
@@ -452,7 +466,9 @@ class Component(ComponentBase):
     @staticmethod
     async def _list_models(client):
         models = await client.list_models()
-        return [{"value": m, "label": m} for m in models]
+        result = [{"value": m, "label": m} for m in models]
+        result.append({"value": "custom_model", "label": "Custom Model"})
+        return result
 
 
 """
