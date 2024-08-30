@@ -9,7 +9,10 @@ from keboola.http_client import AsyncHttpClient
 SUPPORTED_MODELS = {
     "mistral-7b-instruct-v0-1-fep": "https://qwiarbdt0vaeh0cb.us-east-1.aws.endpoints.huggingface.cloud",
     "gemma-7b-it-voa": "https://yi9ctuuxjnmgtjkc.us-east-1.aws.endpoints.huggingface.cloud",
-    "meta-llama-3-8b-noz": "https://nbd6y80gxtows9b3.us-east-1.aws.endpoints.huggingface.cloud"
+    "meta-llama-3-8b-noz": "https://nbd6y80gxtows9b3.us-east-1.aws.endpoints.huggingface.cloud",
+    "Serverless/Meta-Llama-3-8B-Instruct": "https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct",
+    "Serverless/Mistral-Nemo-Instruct-2407": "https://api-inference.huggingface.co/models/mistralai/Mistral-Nemo-Instruct-2407",
+    "Serverless/Phi-3-mini-4k-instruct": "https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct"
 }
 
 
