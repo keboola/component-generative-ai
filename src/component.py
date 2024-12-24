@@ -261,7 +261,8 @@ class Component(ComponentBase):
 
     def _build_prompt(self, input_keys: List[str], row: dict):
         prompt = self._configuration.prompt_options.prompt
-        for input_key in input_keys:
+        unique_keys = list(dict.fromkeys(input_keys))
+        for input_key in unique_keys:
             prompt = prompt.replace('[[' + input_key + ']]', row[input_key])
         return prompt
 
@@ -396,12 +397,13 @@ class Component(ComponentBase):
             raise UserException(f"Test prompt is available only for up to 30 placeholders. "
                                 f"You have {len(self.input_keys)} placeholders.")
 
-        table_preview = self._get_table_preview(table_id, columns=self.input_keys, limit=PREVIEW_LIMIT)
+        unique_keys = list(dict.fromkeys(self.input_keys))
+        table_preview = self._get_table_preview(table_id, columns=unique_keys, limit=PREVIEW_LIMIT)
 
         preview_size = len(table_preview)
         table_size = self._get_table_size(table_id)
 
-        if missing_keys := [key for key in self.input_keys if key not in table_preview[0]]:
+        if missing_keys := [key for key in unique_keys if key not in table_preview[0]]:
             raise UserException(f'The columns "{missing_keys}" need to be present in the input data!')
 
         rows = []
