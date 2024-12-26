@@ -1,0 +1,59 @@
+from anthropic import AsyncAnthropic, AnthropicError
+from typing import Optional, Tuple, Callable
+
+from .base import CommonClient, AIClientException
+
+def on_giveup(details: dict):
+    raise AIClientException(details.get("exception"))
+
+
+class AnthropicClient(CommonClient):
+    """
+    Implements a client for the Anthropic library.
+    """
+
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.client = AsyncAnthropic(api_key=api_key)
+        self.inference_function: Callable = None
+
+    async def infer(self, model_name: str, prompt: str, **model_options) -> Tuple[Optional[str], Optional[int]]:
+        if not self.inference_function:
+            self.inference_function = await self.get_inference_function(model_name)
+
+        return await self.inference_function(model_name=model_name, prompt=prompt, **model_options)
+
+    async def get_inference_function(self, model_name: str) -> Callable:
+        """Returns the appropriate inference function."""
+        try:
+            await self.get_chat_completion_result(model_name, prompt="This is a test prompt.", max_tokens=20)
+            return self.get_chat_completion_result
+        except AnthropicError:
+            raise AIClientException(f"The component is unable to use model {model_name}. Please check your API key.")
+
+    async def get_chat_completion_result(self, model_name: str, prompt: str, **model_options) \
+            -> Tuple[Optional[str], Optional[int]]:
+
+        messages = [{"role": "user", "content": prompt}]
+
+        try:
+            response = await self.client.messages.create(
+                max_tokens=1024,
+                model=model_name,
+                messages=messages
+            )
+        except AnthropicError as e:
+            raise AIClientException(f"Encountered AnthropicError: {e}")
+
+        content = response.content[0].text
+        token_usage = response.usage.output_tokens
+
+        return content, token_usage
+
+    async def list_models(self) -> list:
+        try:
+            response = await self.client.models.list()
+        except AnthropicError as e:
+            raise AIClientException(f"Encountered AnthropicError while listing models: {e}")
+
+        return [r.id for r in response.data]

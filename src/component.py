@@ -26,6 +26,7 @@ from client.openai_client import OpenAIClient, AzureOpenAIClient
 from client.googleai_client import GoogleAIClient
 from client.base import AIClientException
 from client.huggingface_client import HuggingfaceClient
+from client.anthropic_client import AnthropicClient
 
 # configuration variables
 RESULT_COLUMN_NAME = 'result_value'
@@ -147,6 +148,9 @@ class Component(ComponentBase):
                 self.api_key = self.configuration.image_parameters.get(KEY_DEFAULT_API_TOKEN_HUGGINGFACE)
                 logging.info("Using API key provided by Keboola.")
             return HuggingfaceClient(self.api_key, endpoint_url=self.configuration.parameters.get(KEY_ENDPOINT_URL))
+
+        elif self.service == "anthropic":
+            return AnthropicClient(self.api_key)
 
         else:
             raise UserException(f"{self.service} service is not implemented yet.")
