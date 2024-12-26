@@ -38,6 +38,8 @@ For information on retrieving your API key, API Base, and Deployment ID, refer t
 
 #### AI Service Provider: Anthropic
 
+- **API Key (`#api_token`)**
+
 - You only need the API key for this service.
 - Concurrency is currently limited to 5 requests due to the Anthropic API rate limit for lower-tier accounts.
 
