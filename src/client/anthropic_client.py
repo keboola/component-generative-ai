@@ -3,6 +3,7 @@ from typing import Optional, Tuple, Callable
 
 from .base import CommonClient, AIClientException
 
+
 def on_giveup(details: dict):
     raise AIClientException(details.get("exception"))
 
