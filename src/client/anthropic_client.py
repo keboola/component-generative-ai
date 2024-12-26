@@ -1,3 +1,4 @@
+import asyncio
 from anthropic import AsyncAnthropic, AnthropicError
 from typing import Optional, Tuple, Callable
 
@@ -15,8 +16,9 @@ class AnthropicClient(CommonClient):
 
     def __init__(self, api_key: str):
         self.api_key = api_key
-        self.client = AsyncAnthropic(api_key=api_key)
+        self.client = AsyncAnthropic(api_key=api_key, max_retries=5)
         self.inference_function: Callable = None
+        self.semaphore = asyncio.Semaphore(5)
 
     async def infer(self, model_name: str, prompt: str, **model_options) -> Tuple[Optional[str], Optional[int]]:
         if not self.inference_function:
@@ -35,21 +37,24 @@ class AnthropicClient(CommonClient):
     async def get_chat_completion_result(self, model_name: str, prompt: str, **model_options) \
             -> Tuple[Optional[str], Optional[int]]:
 
+        max_tokens = model_options.get('max_tokens', 1024)
         messages = [{"role": "user", "content": prompt}]
 
-        try:
-            response = await self.client.messages.create(
-                max_tokens=1024,
-                model=model_name,
-                messages=messages
-            )
-        except AnthropicError as e:
-            raise AIClientException(f"Encountered AnthropicError: {e}")
+        # Use semaphore to limit parallelism due to lower token per minute limit
+        async with self.semaphore:
+            try:
+                response = await self.client.messages.create(
+                    max_tokens=max_tokens,
+                    model=model_name,
+                    messages=messages
+                )
+            except AnthropicError as e:
+                raise AIClientException(f"Encountered AnthropicError: {e}")
 
-        content = response.content[0].text
-        token_usage = response.usage.output_tokens
+            content = response.content[0].text
+            token_usage = response.usage.output_tokens
 
-        return content, token_usage
+            return content, token_usage
 
     async def list_models(self) -> list:
         try:
