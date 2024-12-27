@@ -2,6 +2,7 @@ import backoff
 from typing import Optional, Tuple
 import google.api_core.exceptions
 import google.generativeai as genai
+from google.generativeai.types import AsyncGenerateContentResponse
 
 from .base import CommonClient, AIClientException
 
@@ -30,14 +31,15 @@ class GoogleAIClient(CommonClient):
             feedback = str(response.prompt_feedback) if response.prompt_feedback else ""
             content = f"Failed to process prompt: {prompt}, feedback: {feedback}, reason: {e}"
 
-        token_usage = await self.get_total_tokens(model_name, prompt, content)
+        token_usage = await self.get_total_tokens(response)
 
         return content, token_usage
 
     @staticmethod
-    async def get_total_tokens(model: str, prompt: str, response: str = "") -> int:
-        # todo implement https://ai.google.dev/api/python/google/ai/generativelanguage/CountTextTokensRequest
-        return 0
+    async def get_total_tokens(response: AsyncGenerateContentResponse) -> int:
+        usage_metadata = getattr(response, "usage_metadata", 0)
+        total_tokens = getattr(usage_metadata, "total_tokens", 0)
+        return total_tokens
 
     async def list_models(self) -> list:
         models_with_generate_content = [
