@@ -36,6 +36,13 @@ For information on retrieving your API key, API Base, and Deployment ID, refer t
 - **API Key (`#api_token`)**
 - **API Key (`endpoint_url`)** - You can use any endpoint url from your <a href="https://ui.endpoints.huggingface.co/">HuggingFace web console.</a> or a serverless deployment.
 
+#### AI Service Provider: Anthropic
+
+- **API Key (`#api_token`)**
+
+- You only need the API key for this service.
+- Concurrency is currently limited to 5 requests due to the Anthropic API rate limit for lower-tier accounts.
+
 ### Other options:
 
 - **Model (`prompt`)** You can use the sync action to load available models for your account.

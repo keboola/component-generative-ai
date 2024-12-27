@@ -16,7 +16,8 @@
             "openai",
             "azure_openai",
             "google",
-            "huggingface"
+            "huggingface",
+            "anthropic"
           ],
           "default": "open_ai",
           "options": {
@@ -24,7 +25,8 @@
               "OpenAI",
               "Azure OpenAI",
               "Google (Only available on US stack)",
-              "Hugging Face"
+              "Hugging Face",
+              "Anthropic"
             ]
           },
           "propertyOrder": 1
