@@ -206,7 +206,7 @@ class Component(ComponentBase):
             return self._build_output_row(row, str(e))
 
         self.tokens_used += token_usage
-        logging.debug(f"Tokens spend: {self.tokens_used}")
+        logging.debug(f"Tokens spent: {self.tokens_used}")
         self.processed_table_rows += 1
 
         if self.processed_table_rows % LOG_EVERY == 0:
