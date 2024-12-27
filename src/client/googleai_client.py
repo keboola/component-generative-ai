@@ -38,7 +38,7 @@ class GoogleAIClient(CommonClient):
     @staticmethod
     async def get_total_tokens(response: AsyncGenerateContentResponse) -> int:
         usage_metadata = getattr(response, "usage_metadata", 0)
-        total_tokens = getattr(usage_metadata, "total_tokens", 0)
+        total_tokens = getattr(usage_metadata, "total_token_count", 0)
         return total_tokens
 
     async def list_models(self) -> list:
