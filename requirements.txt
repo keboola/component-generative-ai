@@ -1,7 +1,7 @@
 keboola.component==1.4.4
 keboola.utils==1.1.0
 kbcstorage==0.7.2
-openai==1.4.0
+openai==1.58.1
 mock==4.0.3
 freezegun==1.2.2
 pystache

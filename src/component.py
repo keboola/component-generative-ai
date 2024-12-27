@@ -257,7 +257,9 @@ class Component(ComponentBase):
         keys = [token.key for token in template._parse_tree if hasattr(token, "key")]  # noqa
         if len(keys) < 1:
             raise UserException('You must provide at least one input placeholder. 0 were found.')
-        return keys
+
+        unique_keys = list(dict.fromkeys(keys))
+        return unique_keys
 
     def _build_prompt(self, input_keys: List[str], row: dict):
         prompt = self._configuration.prompt_options.prompt
