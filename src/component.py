@@ -434,6 +434,47 @@ class Component(ComponentBase):
         else:
             return ValidationResult("Query returned no data.", MessageType.WARNING)
 
+    sync_action('improvePrompt')
+    def improve_prompt(self) -> ValidationResult:
+        """
+        Enhances the user-provided prompt using the selected LLM model.
+        This action retrieves the existing prompt from the configuration, sends it to the appropriate model for
+        refinement, and returns an improved version. The improvement process follows the same logic as the run method,
+        ensuring consistent formatting and token usage considerations.
+
+        The result is returned as a ValidationResult, allowing users to preview the improved prompt before applying it.
+        """
+        self.init_configuration()
+        client = self.get_client()
+
+        prompt_config = self.configuration.get('prompt_options', {})
+        model_config = self.configuration.get('model_options', {})
+
+        prompt = prompt_config.get('prompt', '')
+        if not prompt:
+            return ValidationResult("No prompt provided", MessageType.WARNING)
+
+        try:
+            async def _improve_prompt_async():
+                model_name = model_config.get('model_name')
+
+                model_options = {
+                    k: v for k, v in model_config.items()
+                    if k not in ['model_name']
+                }
+
+                return await client._improve_prompt(
+                    model_name=model_name,
+                    prompt=prompt,
+                    **model_options
+                )
+
+            improved_prompt = asyncio.run(_improve_prompt_async())
+            return ValidationResult(f"**Improved Prompt:**\n\n{improved_prompt}", MessageType.SUCCESS)
+
+        except AIClientException as e:
+            return ValidationResult(f"Failed to improve prompt: {str(e)}", MessageType.WARNING)
+
     async def _test_prompt(self, client, rows):
         tasks = []
         for row in rows:

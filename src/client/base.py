@@ -15,3 +15,6 @@ class CommonClient(Protocol):
 
     async def list_models(self) -> list:
         pass
+
+    async def improve_prompt(self, prompt: str) -> str:
+        pass

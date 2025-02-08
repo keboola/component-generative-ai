@@ -158,6 +158,17 @@
               "action": "testPrompt"
             }
           }
+        },
+        "improvement_button": {
+          "type": "button",
+          "format": "sync-action",
+          "propertyOrder": 31,
+          "options": {
+            "async": {
+              "label": "IMPROVE PROMPT",
+              "action": "improvePrompt"
+            }
+          }
         }
       }
     },

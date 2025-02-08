@@ -1,7 +1,7 @@
 import logging
 import openai
 from openai import AsyncOpenAI, AsyncAzureOpenAI
-from typing import Optional, Tuple, Callable
+from typing import Optional, Tuple, Callable, List
 
 from .base import CommonClient, AIClientException
 
@@ -10,7 +10,52 @@ def on_giveup(details: dict):
     raise AIClientException(details.get("exception"))
 
 
-class OpenAIClient(AsyncOpenAI, CommonClient):
+class OpenAISharedClient(CommonClient):
+    """
+    Shared logic for OpenAI-based clients (OpenAI, Azure OpenAI).
+    """
+
+    async def _call_openai_api(
+        self, model_name: str, messages: List[dict], **model_options
+    ) -> Tuple[str, int]:
+        """
+        Calls OpenAI chat completion API and returns response content and token usage.
+        Handles both OpenAI and Azure OpenAI.
+        """
+
+        try:
+            response = await self.chat.completions.create(
+                model=model_name, messages=messages, **model_options
+            )
+        except openai.OpenAIError as e:
+            raise AIClientException(f"OpenAI API error: {e}")
+
+        return response.choices[0].message.content, response.usage.total_tokens
+
+    async def _improve_prompt(
+        self, model_name: str, prompt: str, temperature: float = 0.7, max_tokens: int = 300
+    ) -> str:
+        """
+        Enhances the given prompt using OpenAI's chat completion API.
+        """
+
+        system_instruction = (
+            "You are an expert prompt engineer. "
+            "Improve the clarity, conciseness, and the effectiveness of the following prompt."
+        )
+
+        messages = [
+            { "role": "system", "content": system_instruction },
+            { "role": "user", "content": prompt }
+        ]
+
+        response_content, _ = await self._call_openai_api(
+            model_name, messages, temperature=temperature, max_tokens=max_tokens
+        )
+
+        return response_content
+
+class OpenAIClient(AsyncOpenAI, OpenAISharedClient):
     """
     Implements OpenAI and AzureOpenAI clients.
     TODO: Implement try except using wrapper.
@@ -76,7 +121,7 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
         return [model.id for model in r.data]
 
 
-class AzureOpenAIClient(AsyncAzureOpenAI, CommonClient):
+class AzureOpenAIClient(AsyncAzureOpenAI, OpenAISharedClient):
     def __init__(self, api_key, api_base, deployment_id, api_version):
         super().__init__(api_key=api_key,
                          api_version=api_version,
