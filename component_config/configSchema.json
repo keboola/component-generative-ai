@@ -19,7 +19,7 @@
             "huggingface",
             "anthropic"
           ],
-          "default": "open_ai",
+          "default": "openai",
           "options": {
             "enum_titles": [
               "OpenAI",
