@@ -86,6 +86,16 @@ class HuggingfaceClient(CommonClient):
 
         return base_url
 
+    async def improve_prompt(
+        self,
+        model_name: str,
+        prompt: str,
+        temperature: float = 0.7,
+        max_tokens: int = 300,
+        system_instruction: Optional[str] = None
+    ) -> str:
+        raise NotImplementedError("improve_prompt not implemented for HuggingFace yet")
+
     @staticmethod
     def _is_asleep(status_code: int) -> bool:
         return status_code == 503

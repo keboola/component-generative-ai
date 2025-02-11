@@ -463,7 +463,7 @@ class Component(ComponentBase):
                     if k not in ['model_name']
                 }
 
-                return await client._improve_prompt(
+                return await client.improve_prompt(
                     model_name=model_name,
                     prompt=prompt,
                     **model_options

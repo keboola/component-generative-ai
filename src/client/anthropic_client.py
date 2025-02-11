@@ -1,4 +1,5 @@
 import asyncio
+
 from anthropic import AsyncAnthropic, AnthropicError
 from typing import Optional, Tuple, Callable
 
@@ -55,6 +56,42 @@ class AnthropicClient(CommonClient):
             token_usage = response.usage.output_tokens
 
             return content, token_usage
+
+    async def improve_prompt(
+        self,
+        model_name: str,
+        prompt: str,
+        temperature: float = 0.7,
+        max_tokens: int = 300,
+        system_instructions: Optional[str] = None
+    ) -> str:
+        """
+        Enhances the given prompt using Anthropic API
+        """
+        default_system = (
+            "You are an expert prompt engineer. "
+            "Improve the clarity, conciseness, and the effectiveness of the following prompt."
+        )
+
+        messages = [
+            {
+                "role": "user",
+                "content": f"{system_instructions or default_system}\n\nPrompt to improve:\n{prompt}"
+            }
+        ]
+
+        try:
+            response = await self.client.messages.create(
+                model=model_name,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+
+        except AnthropicError as e:
+            raise AIClientException(f"AnthropicError: {e}")
+
+        return response.content[0].text
 
     async def list_models(self) -> list:
         try:

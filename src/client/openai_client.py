@@ -32,20 +32,25 @@ class OpenAISharedClient(CommonClient):
 
         return response.choices[0].message.content, response.usage.total_tokens
 
-    async def _improve_prompt(
-        self, model_name: str, prompt: str, temperature: float = 0.7, max_tokens: int = 300
+    async def improve_prompt(
+        self,
+        model_name: str,
+        prompt: str,
+        temperature: float = 0.7,
+        max_tokens: int = 300,
+        system_instructions: Optional[str] = None
     ) -> str:
         """
         Enhances the given prompt using OpenAI's chat completion API.
         """
 
-        system_instruction = (
+        default_system = (
             "You are an expert prompt engineer. "
             "Improve the clarity, conciseness, and the effectiveness of the following prompt."
         )
 
         messages = [
-            { "role": "system", "content": system_instruction },
+            { "role": "system", "content": system_instructions or default_system },
             { "role": "user", "content": prompt }
         ]
 

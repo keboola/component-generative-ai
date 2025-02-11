@@ -41,6 +41,42 @@ class GoogleAIClient(CommonClient):
         total_tokens = getattr(usage_metadata, "total_token_count", 0)
         return total_tokens
 
+    async def improve_prompt(
+        self,
+        model_name: str,
+        prompt: str,
+        temperature: float = 0.7,
+        max_tokens: int = 300,
+        system_instruction: Optional[str] = None,
+    ) -> str:
+        """
+        Enhances the given prompt using Google's Generative AI API.
+        """
+        if not self.model:
+            self.model = genai.GenerativeModel(model_name=model_name)
+
+        default_system = (
+            "You are an expert prompt engineer. "
+            "Improve the clarity, conciseness, and the effectiveness of the following prompt."
+        )
+
+        full_prompt = f"{system_instruction or default_system}\n\nPrompt to improve:\n{prompt}"
+
+        try:
+            response = await self.model.generate_content_async(full_prompt)
+        except google.api_core.exceptions.FailedPrecondition as e:
+            raise AIClientException(f"FailedPrecondition: {e}")
+        except google.auth.exceptions.GoogleAuthError as e:
+            raise AIClientException(f"GoogleAuthError: {e}")
+
+        try:
+            content = str(response.text)
+        except (IndexError, ValueError) as e:
+            feedback = str(response.prompt_feedback) if response.prompt_feedback else ""
+            content = f"Failed to process prompt: {full_prompt}, feedback: {feedback}, reason: {e}"
+
+        return content
+
     async def list_models(self) -> list:
         models_with_generate_content = [
             m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods

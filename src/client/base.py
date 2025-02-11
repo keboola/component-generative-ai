@@ -16,5 +16,12 @@ class CommonClient(Protocol):
     async def list_models(self) -> list:
         pass
 
-    async def improve_prompt(self, prompt: str) -> str:
+    async def improve_prompt(
+        self,
+        model_name: str,
+        prompt: str,
+        temperature: float = 0.7,
+        max_tokens: int = 300,
+        system_instruction: Optional[str] = None
+    ) -> str:
         pass
