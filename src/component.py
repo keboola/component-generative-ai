@@ -204,7 +204,7 @@ class Component(ComponentBase):
             if not self.queue_v2:
                 if "User location is not supported for the API use" in str(e):
                     raise UserException("Google AI services are only available on US stack.")
-                raise UserException(f"Error occured while calling AI API: {e}")
+                raise UserException(f"Error occurred while calling AI API: {e}")
 
             logging.warning(f"Failed to process row {row}, reason: {e}.")
             return self._build_output_row(row, str(e))
@@ -224,9 +224,7 @@ class Component(ComponentBase):
     def prepare_tables(self):
         input_table = self._get_input_table()
         if missing_keys := [key for key in self.input_keys if key not in input_table.columns]:
-            raise UserException(
-                f'The columns "{missing_keys}" need to be present in the input data!'
-            )
+            raise UserException(f'The columns "{missing_keys}" need to be present in the input data!')
 
         out_table = self._build_out_table(input_table)
 
@@ -234,9 +232,7 @@ class Component(ComponentBase):
             t for t in out_table.primary_key if
             t not in input_table.columns
         ]:
-            raise UserException(
-                f'Some specified primary keys are not in the input table: {missing_keys}'
-            )
+            raise UserException(f'Some specified primary keys are not in the input table: {missing_keys}')
 
         return input_table, out_table
 
@@ -253,10 +249,7 @@ class Component(ComponentBase):
         destination_config = self.configuration.parameters['destination']
 
         if not (out_table_name := destination_config.get("output_table_name")):
-            out_table_name = (
-                "app-generative-ai-"
-                f"{self.environment_variables.config_row_id}.csv"
-            )
+            out_table_name = f"app-generative-ai-{self.environment_variables.config_row_id}.csv"
         else:
             out_table_name = f"{out_table_name}.csv"
 
@@ -277,10 +270,7 @@ class Component(ComponentBase):
         template = pystache.parse(prompt, delimiters=('[[', ']]'))
         keys = [token.key for token in template._parse_tree if hasattr(token, "key")]  # noqa
         if len(keys) < 1:
-            raise UserException(
-                "You must provide at least one input placeholder. "
-                "0 were found."
-            )
+            raise UserException("You must provide at least one input placeholder. 0 were found.")
 
         unique_keys = list(dict.fromkeys(keys))
         return unique_keys
@@ -293,10 +283,7 @@ class Component(ComponentBase):
 
     def _get_input_table(self) -> TableDefinition:
         if not self.get_input_tables_definitions():
-            raise UserException(
-                "No input table specified. "
-                "Please provide one input table in the input mapping!"
-            )
+            raise UserException("No input table specified. Please provide one input table in the input mapping!")
 
         if len(self.get_input_tables_definitions()) > 1:
             raise UserException("Only one input table is supported")
@@ -408,9 +395,7 @@ class Component(ComponentBase):
         table_detail = client.tables.detail(table_id)
         columns = table_detail.get("columns")
         if not columns:
-            raise UserException(
-                f"Cannot fetch list of columns for table {table_id}"
-            )
+            raise UserException(f"Cannot fetch list of columns for table {table_id}")
         return columns
 
     @staticmethod
@@ -437,9 +422,8 @@ class Component(ComponentBase):
     def test_prompt(self) -> ValidationResult:
         """
         Uses table preview from sapi to apply prompt for on a few table rows.
-        It uses same functions as the run method.
-        The only exception is replacing newlines with spaces to ensure
-        proper formatting for ValidationResult.
+        It uses the same functions as the run method. The only exception is replacing
+        newlines with spaces to ensure proper formatting for ValidationResult.
         """
         self.init_configuration()
         client = self.get_client()
@@ -460,13 +444,8 @@ class Component(ComponentBase):
         preview_size = len(table_preview)
         table_size = self._get_table_size(table_id)
 
-        if missing_keys := [
-            key for key in self.input_keys if key not in table_preview[0]
-        ]:
-            raise UserException(
-                f'The columns "{missing_keys}" '
-                'need to be present in the input data!'
-            )
+        if missing_keys := [key for key in self.input_keys if key not in table_preview[0]]:
+            raise UserException(f'The columns "{missing_keys}" need to be present in the input data!')
 
         rows = []
         for row in table_preview:
@@ -481,31 +460,20 @@ class Component(ComponentBase):
                 output.append(o)
 
         if output:
-            estimated_token_usage = self.estimate_token_usage(
-                preview_size,
-                table_size
-            )
+            estimated_token_usage = self.estimate_token_usage(preview_size, table_size)
 
             markdown = self.create_markdown_table(output)
             tokens_used_info = (
-                "\nTokens used during test prompting: "
-                f"{self.tokens_used}"
+                f"\nTokens used during test prompting: {self.tokens_used}"
             )
             token_estimation_info = (
-                "\nEstimated token usage for the whole input table: "
-                f"{estimated_token_usage}"
+                f"\nEstimated token usage for the whole input table: {estimated_token_usage}"
             )
             markdown += tokens_used_info
             markdown += token_estimation_info
-            return ValidationResult(
-                markdown,
-                MessageType.SUCCESS
-            )
+            return ValidationResult(markdown, MessageType.SUCCESS)
         else:
-            return ValidationResult(
-                "Query returned no data.",
-                MessageType.WARNING
-            )
+            return ValidationResult("Query returned no data.", MessageType.WARNING)
 
     @sync_action('improvePrompt')
     def improve_prompt(self) -> ValidationResult:
@@ -572,9 +540,7 @@ class Component(ComponentBase):
 
     @sync_action('getPromptTemplate')
     def get_prompt_template(self) -> ValidationResult:
-        configuration: Configuration = Configuration.load_from_dict(
-            self.configuration.parameters
-        )
+        configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
         template = configuration.prompt_templates.prompt_template
 
         with open('src/templates/prompts.json', 'r') as json_file:
@@ -613,8 +579,7 @@ class Component(ComponentBase):
 if __name__ == "__main__":
     try:
         comp = Component()
-        # this triggers the run method by default
-        # and is controlled by the configuration.action parameter
+        # this triggers the run method by default and is controlled by the configuration.action parameter
         comp.execute_action()
     except UserException as exc:
         logging.exception(exc)

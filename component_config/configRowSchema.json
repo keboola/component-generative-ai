@@ -15,7 +15,6 @@
       "propertyOrder": 1,
       "options": {
         "async": {
-        "async": {
           "label": "List models",
           "action": "listModels"
         }
@@ -223,4 +222,4 @@
       }
     }
   }
-}}
+}
