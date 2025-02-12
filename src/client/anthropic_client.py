@@ -61,22 +61,28 @@ class AnthropicClient(CommonClient):
         self,
         model_name: str,
         prompt: str,
-        temperature: float = 0.7,
-        max_tokens: int = 300,
-        system_instructions: Optional[str] = None
+        temperature: float,
+        max_tokens: int
     ) -> str:
         """
         Enhances the given prompt using Anthropic API
         """
         default_system = (
-            "You are an expert prompt engineer. "
-            "Improve the clarity, conciseness, and the effectiveness of the following prompt."
+            "You are an expert prompt engineer with deep knowledge of effective AI prompting. "
+            "Your task is to refine and improve the following "
+            "prompt while keeping it clear, structured, and effective."
+            "CRITICAL: You MUST keep the exact placeholder '[[INPUT_COLUMN]]' "
+            "in your improved prompt exactly as is. "
+            "The placeholder '[[INPUT_COLUMN]]' is essential for the system to work "
+            "and must appear in your output in the exact "
+            "same format. Your improved prompt must end with this "
+            "placeholder surrounded by triple quotes: \"\"\"[[INPUT_COLUMN]]\"\"\" "
         )
 
         messages = [
             {
                 "role": "user",
-                "content": f"{system_instructions or default_system}\n\nPrompt to improve:\n{prompt}"
+                "content": f"{default_system}\n\nPrompt to improve:\n{prompt}"
             }
         ]
 

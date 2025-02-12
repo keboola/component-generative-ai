@@ -36,29 +36,40 @@ class OpenAISharedClient(CommonClient):
         self,
         model_name: str,
         prompt: str,
-        temperature: float = 0.7,
-        max_tokens: int = 300,
-        system_instructions: Optional[str] = None
+        temperature: float,
+        max_tokens: int
     ) -> str:
         """
         Enhances the given prompt using OpenAI's chat completion API.
         """
 
         default_system = (
-            "You are an expert prompt engineer. "
-            "Improve the clarity, conciseness, and the effectiveness of the following prompt."
+            "You are an expert prompt engineer with "
+            "deep knowledge of effective AI prompting. "
+            "Your task is to refine and improve the following "
+            "prompt while keeping it clear, structured, and effective. "
+            "However, you must strictly preserve all placeholders "
+            "enclosed in double brackets (e.g., `[[INPUT_COLUMN]]`). "
+            "Do not modify, replace, or remove them, as they represent "
+            "dynamic values that the user will define later."
         )
 
-        messages = [
-            { "role": "system", "content": system_instructions or default_system },
-            { "role": "user", "content": prompt }
-        ]
+        messages = [{"role": "user", "content": f"{default_system}\n\n{prompt}"}]
 
-        response_content, _ = await self._call_openai_api(
-            model_name, messages, temperature=temperature, max_tokens=max_tokens
-        )
+        try:
+            response_content, _ = await self._call_openai_api(
+                model_name, messages, temperature=temperature, max_completion_tokens=max_tokens
+            )
+        except Exception as e:
+            if "temperature" in str(e) and "Only the default (1) value is supported" in str(e):
+                response_content, _ = await self._call_openai_api(
+                    model_name, messages, temperature=1, max_completion_tokens=max_tokens
+                )
+            else:
+                raise e
 
         return response_content
+
 
 class OpenAIClient(AsyncOpenAI, OpenAISharedClient):
     """

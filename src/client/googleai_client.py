@@ -45,9 +45,8 @@ class GoogleAIClient(CommonClient):
         self,
         model_name: str,
         prompt: str,
-        temperature: float = 0.7,
-        max_tokens: int = 300,
-        system_instruction: Optional[str] = None,
+        temperature: float,
+        max_tokens: int
     ) -> str:
         """
         Enhances the given prompt using Google's Generative AI API.
@@ -56,11 +55,21 @@ class GoogleAIClient(CommonClient):
             self.model = genai.GenerativeModel(model_name=model_name)
 
         default_system = (
-            "You are an expert prompt engineer. "
-            "Improve the clarity, conciseness, and the effectiveness of the following prompt."
+            "You are an expert prompt engineer with "
+            "deep knowledge of effective AI prompting. "
+            "Your task is to refine and improve the following prompt, "
+            "making it clearer, more structured, and more effective. "
+            "However, you must strictly preserve all placeholders "
+            "enclosed in double brackets (e.g., `[[INPUT_COLUMN]]`). "
+            "Do not modify, replace, or remove the existing placeholders, "
+            "and **do not introduce any new placeholders**. "
+            "If the prompt includes a keyword extraction task, specify to extract "
+            "a reasonable number of keywords (e.g., 3-5), but do not use a placeholder. "
+            "Present the improved prompt directly, without any "
+            "introductory phrases like 'Improved Prompt:'."
         )
 
-        full_prompt = f"{system_instruction or default_system}\n\nPrompt to improve:\n{prompt}"
+        full_prompt = f"{default_system}\n\nPrompt to improve:\n{prompt}"
 
         try:
             response = await self.model.generate_content_async(full_prompt)

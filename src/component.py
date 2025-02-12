@@ -224,12 +224,19 @@ class Component(ComponentBase):
     def prepare_tables(self):
         input_table = self._get_input_table()
         if missing_keys := [key for key in self.input_keys if key not in input_table.columns]:
-            raise UserException(f'The columns "{missing_keys}" need to be present in the input data!')
+            raise UserException(
+                f'The columns "{missing_keys}" need to be present in the input data!'
+            )
 
         out_table = self._build_out_table(input_table)
 
-        if missing_keys := [t for t in out_table.primary_key if t not in input_table.columns]:
-            raise UserException(f'Some specified primary keys are not in the input table: {missing_keys}')
+        if missing_keys := [
+            t for t in out_table.primary_key if
+            t not in input_table.columns
+        ]:
+            raise UserException(
+                f'Some specified primary keys are not in the input table: {missing_keys}'
+            )
 
         return input_table, out_table
 
@@ -239,11 +246,17 @@ class Component(ComponentBase):
         output_row[RESULT_COLUMN_NAME] = result.strip()
         return output_row
 
-    def _build_out_table(self, input_table: TableDefinition) -> TableDefinition:
+    def _build_out_table(
+        self,
+        input_table: TableDefinition
+    ) -> TableDefinition:
         destination_config = self.configuration.parameters['destination']
 
         if not (out_table_name := destination_config.get("output_table_name")):
-            out_table_name = f"app-generative-ai-{self.environment_variables.config_row_id}.csv"
+            out_table_name = (
+                "app-generative-ai-"
+                f"{self.environment_variables.config_row_id}.csv"
+            )
         else:
             out_table_name = f"{out_table_name}.csv"
 
@@ -252,15 +265,22 @@ class Component(ComponentBase):
         primary_key = destination_config.get('primary_keys_array', [])
 
         incremental_load = destination_config.get('incremental_load', False)
-        return self.create_out_table_definition(out_table_name, columns=[], primary_key=primary_key,
-                                                incremental=incremental_load)
+        return self.create_out_table_definition(
+            out_table_name,
+            columns=[],
+            primary_key=primary_key,
+            incremental=incremental_load
+        )
 
     @staticmethod
     def _get_input_keys(prompt: str):
         template = pystache.parse(prompt, delimiters=('[[', ']]'))
         keys = [token.key for token in template._parse_tree if hasattr(token, "key")]  # noqa
         if len(keys) < 1:
-            raise UserException('You must provide at least one input placeholder. 0 were found.')
+            raise UserException(
+                "You must provide at least one input placeholder. "
+                "0 were found."
+            )
 
         unique_keys = list(dict.fromkeys(keys))
         return unique_keys
@@ -273,7 +293,10 @@ class Component(ComponentBase):
 
     def _get_input_table(self) -> TableDefinition:
         if not self.get_input_tables_definitions():
-            raise UserException("No input table specified. Please provide one input table in the input mapping!")
+            raise UserException(
+                "No input table specified. "
+                "Please provide one input table in the input mapping!"
+            )
 
         if len(self.get_input_tables_definitions()) > 1:
             raise UserException("Only one input table is supported")
@@ -281,7 +304,10 @@ class Component(ComponentBase):
         return self.get_input_tables_definitions()[0]
 
     def add_flag_to_manifest(self):
-        manifests = [x for x in os.listdir(self.tables_out_path) if x.endswith('.manifest')]
+        manifests = [
+            x for x in os.listdir(self.tables_out_path) if
+            x.endswith('.manifest')
+        ]
         if manifests:
             for filename in manifests:
                 path = os.path.join(self.tables_out_path, filename)
@@ -293,8 +319,15 @@ class Component(ComponentBase):
                 with open(path, 'w') as f:
                     json.dump(data, f)
 
-    def estimate_token_usage(self, preview_size: int, table_size: int) -> int:
-        """Estimates token usage based on number of tokens used during test_prompt."""
+    def estimate_token_usage(
+        self,
+        preview_size: int,
+        table_size: int
+    ) -> int:
+        """
+        Estimates token usage based on number of tokens
+        used during test_prompt.
+        """
         if preview_size > 0:
             return int((self.tokens_used / preview_size) * table_size)
         raise UserException("Cannot process tables with no rows.")
@@ -313,7 +346,12 @@ class Component(ComponentBase):
 
         return table
 
-    def _get_table_preview(self, table_id: str, columns: list[str] = None, limit: int = None) -> list[dict]:
+    def _get_table_preview(
+        self,
+        table_id: str,
+        columns: list[str] = None,
+        limit: int = None
+    ) -> list[dict]:
         tables = Tables(self._get_kbc_root_url(), self._get_storage_token())
         try:
             preview = tables.preview(table_id, columns=columns)
@@ -340,8 +378,9 @@ class Component(ComponentBase):
         return rows_count
 
     def _get_kbc_root_url(self) -> str:
-        return f'https://{self.environment_variables.stack_id}' if self.environment_variables.stack_id \
-            else "https://connection.keboola.com"
+        return f'https://{self.environment_variables.stack_id}' if (
+            self.environment_variables.stack_id) else \
+            "https://connection.keboola.com"
 
     def _get_storage_source(self) -> str:
         storage_config = self.configuration.config_data.get("storage")
@@ -351,20 +390,27 @@ class Component(ComponentBase):
         return source
 
     def _get_storage_token(self) -> str:
-        return self.configuration.parameters.get('#storage_token') or self.environment_variables.token
+        return (
+            self.configuration.parameters.get('#storage_token') or
+            self.environment_variables.token
+        )
 
     def _set_tokens_limit(self) -> any:
         if self._configuration.max_token_spend > 0:
             self.max_token_spend = self._configuration.max_token_spend
-            logging.warning(f"Max token spend has been set to {self.max_token_spend}. If the component reaches "
-                            f"this limit, it will exit.")
+            logging.warning(
+                f"Max token spend has been set to {self.max_token_spend}. "
+                "If the component reaches this limit, it will exit."
+            )
 
     def _get_table_columns(self, table_id: str) -> list:
         client = Client(self._get_kbc_root_url(), self._get_storage_token())
         table_detail = client.tables.detail(table_id)
         columns = table_detail.get("columns")
         if not columns:
-            raise UserException(f"Cannot fetch list of columns for table {table_id}")
+            raise UserException(
+                f"Cannot fetch list of columns for table {table_id}"
+            )
         return columns
 
     @staticmethod
@@ -391,7 +437,8 @@ class Component(ComponentBase):
     def test_prompt(self) -> ValidationResult:
         """
         Uses table preview from sapi to apply prompt for on a few table rows.
-        It uses same functions as the run method. The only exception is replacing newlines with spaces to ensure
+        It uses same functions as the run method.
+        The only exception is replacing newlines with spaces to ensure
         proper formatting for ValidationResult.
         """
         self.init_configuration()
@@ -399,16 +446,27 @@ class Component(ComponentBase):
 
         table_id = self._get_storage_source()
         if len(self.input_keys) > 30:
-            raise UserException(f"Test prompt is available only for up to 30 placeholders. "
-                                f"You have {len(self.input_keys)} placeholders.")
+            raise UserException(
+                "Test prompt is available only for up to 30 placeholders. "
+                f"You have {len(self.input_keys)} placeholders."
+            )
 
-        table_preview = self._get_table_preview(table_id, columns=self.input_keys, limit=PREVIEW_LIMIT)
+        table_preview = self._get_table_preview(
+            table_id,
+            columns=self.input_keys,
+            limit=PREVIEW_LIMIT
+        )
 
         preview_size = len(table_preview)
         table_size = self._get_table_size(table_id)
 
-        if missing_keys := [key for key in self.input_keys if key not in table_preview[0]]:
-            raise UserException(f'The columns "{missing_keys}" need to be present in the input data!')
+        if missing_keys := [
+            key for key in self.input_keys if key not in table_preview[0]
+        ]:
+            raise UserException(
+                f'The columns "{missing_keys}" '
+                'need to be present in the input data!'
+            )
 
         rows = []
         for row in table_preview:
@@ -423,57 +481,86 @@ class Component(ComponentBase):
                 output.append(o)
 
         if output:
-            estimated_token_usage = self.estimate_token_usage(preview_size, table_size)
+            estimated_token_usage = self.estimate_token_usage(
+                preview_size,
+                table_size
+            )
 
             markdown = self.create_markdown_table(output)
-            tokens_used_info = f"\nTokens used during test prompting: {self.tokens_used}"
-            token_estimation_info = f"\nEstimated token usage for the whole input table: {estimated_token_usage}"
+            tokens_used_info = (
+                "\nTokens used during test prompting: "
+                f"{self.tokens_used}"
+            )
+            token_estimation_info = (
+                "\nEstimated token usage for the whole input table: "
+                f"{estimated_token_usage}"
+            )
             markdown += tokens_used_info
             markdown += token_estimation_info
-            return ValidationResult(markdown, MessageType.SUCCESS)
+            return ValidationResult(
+                markdown,
+                MessageType.SUCCESS
+            )
         else:
-            return ValidationResult("Query returned no data.", MessageType.WARNING)
+            return ValidationResult(
+                "Query returned no data.",
+                MessageType.WARNING
+            )
 
-    sync_action('improvePrompt')
+    @sync_action('improvePrompt')
     def improve_prompt(self) -> ValidationResult:
         """
-        Enhances the user-provided prompt using the selected LLM model.
-        This action retrieves the existing prompt from the configuration, sends it to the appropriate model for
-        refinement, and returns an improved version. The improvement process follows the same logic as the run method,
+        Enhances the user-provided prompt
+        using the selected LLM model.
+
+        This action retrieves the existing prompt from the configuration,
+        sends it to the appropriate model for refinement, and
+        returns an improved version.
+
+        The improvement process follows the same logic as the run method,
         ensuring consistent formatting and token usage considerations.
 
-        The result is returned as a ValidationResult, allowing users to preview the improved prompt before applying it.
+        The result is returned as a ValidationResult, allowing users to preview
+        the improved prompt before applying it.
         """
         self.init_configuration()
         client = self.get_client()
 
-        prompt_config = self.configuration.get('prompt_options', {})
-        model_config = self.configuration.get('model_options', {})
-
+        prompt_config = self.configuration.parameters.get(
+            'prompt_options', {}
+        )
+        model_name = self.configuration.parameters.get(
+            'model', {}
+        )
+        additional_options = self.configuration.parameters.get(
+            'additional_options', {}
+        )
         prompt = prompt_config.get('prompt', '')
+
         if not prompt:
             return ValidationResult("No prompt provided", MessageType.WARNING)
 
         try:
             async def _improve_prompt_async():
-                model_name = model_config.get('model_name')
-
-                model_options = {
-                    k: v for k, v in model_config.items()
-                    if k not in ['model_name']
-                }
-
                 return await client.improve_prompt(
                     model_name=model_name,
                     prompt=prompt,
-                    **model_options
+                    temperature=additional_options.get('temperature', 0.6),
+                    max_tokens=additional_options.get('max_tokens', 300)
                 )
 
             improved_prompt = asyncio.run(_improve_prompt_async())
-            return ValidationResult(f"**Improved Prompt:**\n\n{improved_prompt}", MessageType.SUCCESS)
+
+            return ValidationResult(
+                f"**Improved Prompt:**\n\n{improved_prompt}",
+                MessageType.SUCCESS
+            )
 
         except AIClientException as e:
-            return ValidationResult(f"Failed to improve prompt: {str(e)}", MessageType.WARNING)
+            return ValidationResult(
+                f"Failed to improve prompt: {str(e)}",
+                MessageType.WARNING
+            )
 
     async def _test_prompt(self, client, rows):
         tasks = []
@@ -485,7 +572,9 @@ class Component(ComponentBase):
 
     @sync_action('getPromptTemplate')
     def get_prompt_template(self) -> ValidationResult:
-        configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
+        configuration: Configuration = Configuration.load_from_dict(
+            self.configuration.parameters
+        )
         template = configuration.prompt_templates.prompt_template
 
         with open('src/templates/prompts.json', 'r') as json_file:
@@ -524,7 +613,8 @@ class Component(ComponentBase):
 if __name__ == "__main__":
     try:
         comp = Component()
-        # this triggers the run method by default and is controlled by the configuration.action parameter
+        # this triggers the run method by default
+        # and is controlled by the configuration.action parameter
         comp.execute_action()
     except UserException as exc:
         logging.exception(exc)

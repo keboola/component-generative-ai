@@ -20,8 +20,7 @@ class CommonClient(Protocol):
         self,
         model_name: str,
         prompt: str,
-        temperature: float = 0.7,
-        max_tokens: int = 300,
-        system_instruction: Optional[str] = None
+        temperature: float,
+        max_tokens: int
     ) -> str:
         pass
