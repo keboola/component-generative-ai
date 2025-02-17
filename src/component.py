@@ -525,9 +525,13 @@ class Component(ComponentBase):
             )
 
         except AIClientException as e:
+            # noinspection PyTypeChecker
             return ValidationResult(
                 f"Failed to improve prompt: {str(e)}",
-                MessageType.WARNING
+                # @TODO: provide an appropriate value
+                # Once the fix from https://keboola.atlassian.net/browse/CFT-3364 is done,
+                # we can replace it with the MessageType.DANGER
+                "error"
             )
 
     async def _test_prompt(self, client, rows):

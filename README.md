@@ -61,6 +61,11 @@ For information on retrieving your API key, API Base, and Deployment ID, refer t
 - **Presence Penalty (`presence_penalty`):** A number between -2.0 and 2.0. Positive values penalize tokens already present in the text, encouraging diverse topics.
 - **Request Timeout (`request_timeout`):** Seconds to wait for API to respond. This is a workaround for OpenAI API not responding sometimes.
 
+### Synchronous Actions
+
+- **Test Prompt (`testPrompt`)**: Synchronous action that verifies whether the prompt is runnable with the specified config (e.g. params check, column mapping).
+- **Improve Prompt (`improvePrompt`)**: Synchronous action that pick up the prompt defined within the `prompt` field, run against the AI models and suggest an improvement that user can apply.
+
 ---
 
 ### Component Configuration Example
