@@ -8,171 +8,33 @@
   ],
   "properties": {
     "model": {
-      "enum": [],
       "type": "string",
       "title": "Model",
+      "enum": [],
+      "description": "The model which will generate the completion. <a href=\"https://beta.openai.com/docs/models\">Learn more.</a>",
+      "propertyOrder": 1,
       "options": {
         "async": {
           "label": "List models",
           "action": "listModels"
-        }
-      },
-      "description": "The model which will generate the completion. <a href=\"https://beta.openai.com/docs/models\">Learn more.</a>",
-      "propertyOrder": 1
-    },
-    "destination": {
-      "type": "object",
-      "title": "Destination",
-      "required": [
-        "output_table_name",
-        "incremental_load",
-        "primary_keys_array"
-      ],
-      "properties": {
-        "incremental_load": {
-          "type": "boolean",
-          "title": "Incremental Load",
-          "format": "checkbox",
-          "description": "If incremental load is turned on, the table will be updated instead of rewritten. Tables with a primary key will have rows updated, tables without a primary key will have rows appended.",
-          "propertyOrder": 110
-        },
-        "output_table_name": {
-          "type": "string",
-          "title": "Storage Table Name",
-          "options": {
-          "tooltip": "It must start with a letter and can include only letters, numbers, or underscores. No spaces, dots, or special characters are not allowed. If left empty, a name will be generated automatically."
-        },
-          "description": "Name of the table stored in Storage.",
-          "pattern":"^$|^[A-Za-z][A-Za-z0-9_]{0,254}$",
-          "propertyOrder": 100
-        },
-        "primary_keys_array": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "title": "Primary Keys",
-          "format": "select",
-          "options": {
-            "tags": true,
-            "async": {
-              "label": "Re-load columns",
-              "action": "listPkeys"
-            }
-          },
-          "description": "You can enter multiple columns seperated by commas at once e.g., id, other_id. If a primary key is set, updates can be done on the table by selecting incremental loads. The primary key can consist of multiple columns. The primary key of an existing table cannot be changed.",
-          "uniqueItems": true,
-          "propertyOrder": 120
         }
       }
     },
     "endpoint_url": {
       "type": "string",
       "title": "Endpoint URL",
+      "description": "You can find the endpoint url in your <a href=\"https://ui.endpoints.huggingface.co/\">HuggingFace web console.</a>",
+      "propertyOrder": 2,
       "options": {
         "dependencies": {
           "model": "custom_model"
         }
-      },
-      "description": "You can find the endpoint url in your <a href=\"https://ui.endpoints.huggingface.co/\">HuggingFace web console.</a>",
-      "propertyOrder": 2
-    },
-    "prompt_options": {
-      "type": "object",
-      "title": "Prompt Options",
-      "properties": {
-        "prompt": {
-          "type": "string",
-          "title": "Prompt",
-          "format": "textarea",
-          "default": "Extract keywords from this text:\n\n\"\"\"\n[[INPUT_COLUMN]]\n\"\"\"",
-          "options": {
-            "input_height": "250px"
-          },
-          "description": "The prompt and data input pattern. Refer to the input column using placeholder [[INPUT_COLUMN]]. The input table must contain the referenced column. You can find best practices for prompt engineering in <a href=\"https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-openai-api\">OpenAI help pages</a>.",
-          "propertyOrder": 20
-        },
-        "validation_button": {
-          "type": "button",
-          "format": "sync-action",
-          "options": {
-            "async": {
-              "label": "TEST PROMPT",
-              "action": "testPrompt"
-            }
-          },
-          "propertyOrder": 30
-        },
-        "improvement_button": {
-          "type": "button",
-          "format": "sync-action",
-          "options": {
-            "async": {
-              "label": "IMPROVE PROMPT",
-              "action": "improvePrompt"
-            }
-          },
-          "propertyOrder": 31
-        }
-      },
-      "propertyOrder": 20
-    },
-    "max_token_spend": {
-      "type": "integer",
-      "title": "Maximum token spend (Optional)",
-      "default": 0,
-      "description": "If set to value greater than 0, the component will stop processing rows after reaching the limit of allowed tokens. This is only supported for OpenAI Service.",
-      "propertyOrder": 40
-    },
-    "prompt_templates": {
-      "title": "Prompt Templates",
-      "properties": {
-        "prompt_template": {
-          "enum": [
-            "timestamp_from_date",
-            "remove_diacritics",
-            "add_diacritics",
-            "extract_topics",
-            "sentiment_scoring",
-            "text_shortener",
-            "grammar_correction"
-          ],
-          "type": "string",
-          "title": "Prompt Template",
-          "options": {
-            "enum_titles": [
-              "Timestamp from date",
-              "Remove Diacritics",
-              "Add Diacritics",
-              "Extract Topics",
-              "Sentiment Scoring",
-              "Text Shortener",
-              "Grammar Correction"
-            ]
-          },
-          "description": "Select the template to load. You can then copy the template into the Prompt window.",
-          "propertyOrder": 1
-        },
-        "load_prompt_template": {
-          "type": "button",
-          "format": "sync-action",
-          "options": {
-            "async": {
-              "label": "LOAD PROMPT TEMPLATE",
-              "action": "getPromptTemplate"
-            },
-            "dependencies": {
-              "model_type": "predefined"
-            }
-          },
-          "propertyOrder": 2
-        }
-      },
-      "propertyOrder": 15
+      }
     },
     "additional_options": {
       "type": "object",
       "title": "Model Options",
+      "propertyOrder": 10,
       "required": [
         "temperature",
         "top_p",
@@ -180,24 +42,10 @@
         "presence_penalty"
       ],
       "properties": {
-        "top_p": {
-          "type": "number",
-          "title": "Top P",
-          "default": 1,
-          "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.",
-          "propertyOrder": 10
-        },
-        "timeout": {
-          "type": "number",
-          "title": "Request Timeout",
-          "default": 30,
-          "description": "Seconds to wait for API to respond. This is a workaround for OpenAI API not responding sometimes.",
-          "propertyOrder": 40
-        },
         "max_tokens": {
           "type": "number",
           "title": "Max Tokens",
-          "default": 300,
+          "default": 100,
           "description": "The maximum number of tokens to generate in the completion.\n\nThe token count of your prompt plus max_tokens cannot exceed the model's context length. Most models have a context length of 2048 tokens (except for the newest models, which support 4096).",
           "propertyOrder": 1
         },
@@ -208,12 +56,12 @@
           "description": "What sampling temperature to use [0-1]. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer.",
           "propertyOrder": 2
         },
-        "presence_penalty": {
+        "top_p": {
           "type": "number",
-          "title": "Presence Penalty",
-          "default": 0,
-          "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.",
-          "propertyOrder": 30
+          "title": "Top P",
+          "default": 1,
+          "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.",
+          "propertyOrder": 10
         },
         "frequency_penalty": {
           "type": "number",
@@ -221,9 +69,150 @@
           "default": 0,
           "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.",
           "propertyOrder": 20
+        },
+        "presence_penalty": {
+          "type": "number",
+          "title": "Presence Penalty",
+          "default": 0,
+          "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.",
+          "propertyOrder": 30
+        },
+        "timeout": {
+          "type": "number",
+          "title": "Request Timeout",
+          "default": 30,
+          "description": "Seconds to wait for API to respond. This is a workaround for OpenAI API not responding sometimes.",
+          "propertyOrder": 40
         }
-      },
-      "propertyOrder": 10
+      }
+    },
+    "prompt_templates": {
+      "title": "Prompt Templates",
+      "propertyOrder": 15,
+      "properties": {
+        "prompt_template": {
+          "type": "string",
+          "title": "Prompt Template",
+          "enum": [
+            "timestamp_from_date",
+            "remove_diacritics",
+            "add_diacritics",
+            "extract_topics",
+            "sentiment_scoring",
+            "text_shortener",
+            "grammar_correction"
+          ],
+          "description": "Select the template to load. You can then copy the template into the Prompt window.",
+          "propertyOrder": 1,
+          "options": {
+            "enum_titles": [
+              "Timestamp from date",
+              "Remove Diacritics",
+              "Add Diacritics",
+              "Extract Topics",
+              "Sentiment Scoring",
+              "Text Shortener",
+              "Grammar Correction"
+            ]
+          }
+        },
+        "load_prompt_template": {
+          "type": "button",
+          "format": "sync-action",
+          "propertyOrder": 2,
+          "options": {
+            "dependencies": {
+              "model_type": "predefined"
+            },
+            "async": {
+              "label": "LOAD PROMPT TEMPLATE",
+              "action": "getPromptTemplate"
+            }
+          }
+        }
+      }
+    },
+    "prompt_options": {
+      "propertyOrder": 20,
+      "type": "object",
+      "title": "Prompt Options",
+      "properties": {
+        "prompt": {
+          "type": "string",
+          "format": "textarea",
+          "title": "Prompt",
+          "default": "Extract keywords from this text:\n\n\"\"\"\n[[INPUT_COLUMN]]\n\"\"\"",
+          "description": "The prompt and data input pattern. Refer to the input column using placeholder [[INPUT_COLUMN]]. The input table must contain the referenced column. You can find best practices for prompt engineering in <a href=\"https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-openai-api\">OpenAI help pages</a>.",
+          "propertyOrder": 20,
+          "options": {
+            "input_height": "250px"
+          }
+        },
+        "validation_button": {
+          "type": "button",
+          "format": "sync-action",
+          "propertyOrder": 30,
+          "options": {
+            "async": {
+              "label": "TEST PROMPT",
+              "action": "testPrompt"
+            }
+          }
+        }
+      }
+    },
+    "max_token_spend": {
+      "title": "Maximum token spend (Optional)",
+      "description": "If set to value greater than 0, the component will stop processing rows after reaching the limit of allowed tokens. This is only supported for OpenAI Service.",
+      "default": 0,
+      "type": "integer",
+      "propertyOrder": 40
+    },
+    "destination": {
+      "title": "Destination",
+      "type": "object",
+      "required": [
+        "output_table_name",
+        "incremental_load",
+        "primary_keys_array"
+      ],
+      "properties": {
+         "output_table_name": {
+          "type": "string",
+          "title": "Storage Table Name",
+          "options": {
+          "tooltip": "It must start with a letter and can include only letters, numbers, or underscores. No spaces, dots, or special characters are not allowed. If left empty, a name will be generated automatically."
+        },
+          "description": "Name of the table stored in Storage.",
+          "pattern":"^$|^[A-Za-z][A-Za-z0-9_]{0,254}$",
+          "propertyOrder": 100
+        },
+        "incremental_load": {
+          "type": "boolean",
+          "format": "checkbox",
+          "title": "Incremental Load",
+          "description": "If incremental load is turned on, the table will be updated instead of rewritten. Tables with a primary key will have rows updated, tables without a primary key will have rows appended.",
+          "propertyOrder": 110
+        },
+        "primary_keys_array": {
+          "type": "array",
+          "title": "Primary Keys",
+        "format": "select",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true,
+          "options": {
+            "tags": true,
+              "async": {
+                "label": "Re-load columns",
+                "action": "listPkeys"
+            }
+          },
+          "description": "You can enter multiple columns seperated by commas at once e.g., id, other_id. If a primary key is set, updates can be done on the table by selecting incremental loads. The primary key can consist of multiple columns. The primary key of an existing table cannot be changed.",
+          "propertyOrder": 120
+        }
+      }
     }
   }
 }
