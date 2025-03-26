@@ -177,11 +177,11 @@
         "primary_keys_array"
       ],
       "properties": {
-         "output_table_name": {
+        "output_table_name": {
           "type": "string",
           "title": "Storage Table Name",
           "options": {
-          "tooltip": "It must start with a letter and can include only letters, numbers, or underscores. No spaces, dots, or special characters are not allowed. If left empty, a name will be generated automatically."
+          "tooltip": "It must start with a letter and can include only letters, numbers or underscores. No spaces, dots or special characters are allowed. If left empty, a name will be generated automatically."
         },
           "description": "Name of the table stored in Storage.",
           "pattern":"^$|^[A-Za-z][A-Za-z0-9_]{0,254}$",
