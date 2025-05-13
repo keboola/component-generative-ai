@@ -5,28 +5,29 @@ Template Component main class.
 import asyncio
 import csv
 import dataclasses
-import logging
-from typing import List
 import json
+import logging
 import os
+import sys
 from io import StringIO
 from itertools import islice
+from typing import List
+
 import pystache as pystache
 import requests.exceptions
-
+from kbcstorage.client import Client
+from kbcstorage.tables import Tables
 from keboola.component.base import ComponentBase, sync_action
-from keboola.component.sync_actions import ValidationResult, MessageType
 from keboola.component.dao import TableDefinition
 from keboola.component.exceptions import UserException
-from kbcstorage.tables import Tables
-from kbcstorage.client import Client
+from keboola.component.sync_actions import ValidationResult, MessageType
 
-from configuration import Configuration
-from client.openai_client import OpenAIClient, AzureOpenAIClient
-from client.googleai_client import GoogleAIClient
-from client.base import AIClientException
-from client.huggingface_client import HuggingfaceClient
 from client.anthropic_client import AnthropicClient
+from client.base import AIClientException
+from client.googleai_client import GoogleAIClient
+from client.huggingface_client import HuggingfaceClient
+from client.openai_client import OpenAIClient, AzureOpenAIClient
+from configuration import Configuration
 
 # configuration variables
 RESULT_COLUMN_NAME = 'result_value'
@@ -47,6 +48,10 @@ PREVIEW_LIMIT = 5
 BATCH_SIZE = 10
 LOG_EVERY = 100
 PROMPT_TEMPLATES = 'templates/prompts.json'
+
+# to prevent field larger than field limit (131072) Errors
+# https://stackoverflow.com/questions/15063936/csv-error-field-larger-than-field-limit-131072
+csv.field_size_limit(sys.maxsize)
 
 
 class Component(ComponentBase):
@@ -371,7 +376,7 @@ class Component(ComponentBase):
     def count_rows(file_path):
         with open(file_path, 'r', encoding='utf-8') as file:
             reader = csv.reader(file)
-            row_count = sum(1 for _ in reader)-1
+            row_count = sum(1 for _ in reader) - 1
         return row_count
 
     @sync_action('listPkeys')
