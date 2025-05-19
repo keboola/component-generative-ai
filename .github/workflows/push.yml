@@ -18,67 +18,69 @@ env:
   KBC_STORAGE_TOKEN: ${{ secrets.KBC_STORAGE_TOKEN }} # required for running KBC tests
 
 jobs:
-  push_event_info:
-    name: Push Event Info
+  check_version:
+    name: Check Version and Branch
     runs-on: ubuntu-latest
     outputs:
-      app_image_tag: ${{ steps.tag.outputs.app_image_tag }}
-      is_semantic_tag: ${{ steps.tag.outputs.is_semantic_tag }}
-      is_default_branch: ${{ steps.default_branch.outputs.is_default_branch }}
-      is_deploy_ready: ${{ steps.deploy_ready.outputs.is_deploy_ready }}
+      version: ${{ steps.check.outputs.version }}
+      has_version_change: ${{ steps.check.outputs.has_version_change }}
+      is_semantic_tag: ${{ steps.tag_check.outputs.is_semantic_tag }}
+      image_tag: ${{ steps.set_tag.outputs.image_tag }}
+      should_deploy: ${{ steps.deploy_check.outputs.should_deploy }}
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Fetch all branches from remote repository
-        run: git fetch --prune --unshallow --tags -f
-
-      - name: Get current branch name
-        id: current_branch
+      - name: Check if semantic tag
+        id: tag_check
         run: |
-          if [[ ${{ github.ref }} != "refs/tags/"* ]]; then
-            branch_name=${{ github.ref_name }}
-            echo "branch_name=$branch_name" | tee -a $GITHUB_OUTPUT
+          # Get current branch/tag name
+          ref_name="${{ github.ref }}"
+          name="${ref_name#refs/tags/}"
+          name="${name#refs/heads/}"
+          echo "Current ref name: $name"
+          
+          # Check if semantic version
+          if echo "$name" | grep -qE '^([a-zA-Z0-9-]+-)?([0-9]+\.[0-9]+\.[0-9]+)$'; then
+            echo "Valid semantic version detected"
+            echo "is_semantic_tag=true" >> $GITHUB_OUTPUT
           else
-            raw=$(git branch -r --contains ${{ github.ref }})
-            branch="$(echo $raw | sed "s/.*origin\///" | tr -d '\n')"
-            echo "branch_name=$branch" | tee -a $GITHUB_OUTPUT
-          fi
-
-      - name: Is current branch the default branch
-        id: default_branch
-        run: |
-          echo "default_branch='${{ github.event.repository.default_branch }}'"
-          if [ "${{ github.event.repository.default_branch }}" = "${{ steps.current_branch.outputs.branch_name }}" ]; then
-             echo "is_default_branch=true" | tee -a $GITHUB_OUTPUT
-          else
-             echo "is_default_branch=false" | tee -a $GITHUB_OUTPUT
+            echo "Not a semantic version"
+            echo "is_semantic_tag=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Set image tag
-        id: tag
+        id: set_tag
         run: |
-          TAG="${GITHUB_REF##*/}"
-          IS_SEMANTIC_TAG=$(echo "$TAG" | grep -q '^v\?[0-9]\+\.[0-9]\+\.[0-9]\+$' && echo true || echo false)
-          echo "is_semantic_tag=$IS_SEMANTIC_TAG" | tee -a $GITHUB_OUTPUT
-          echo "app_image_tag=$TAG" | tee -a $GITHUB_OUTPUT
-
-      - name: Deploy-Ready check
-        id: deploy_ready
-        run: |
-          if [[ "${{ steps.default_branch.outputs.is_default_branch }}" == "true" \
-            && "${{ github.ref }}" == refs/tags/* \
-            && "${{ steps.tag.outputs.is_semantic_tag }}" == "true" ]]; then
-              echo "is_deploy_ready=true" | tee -a $GITHUB_OUTPUT
+          if [ "${{ steps.tag_check.outputs.is_semantic_tag }}" = "true" ] && \
+             [ "${{ steps.check.outputs.has_version_change }}" = "true" ]; then
+            # Pro semantický tag s novou verzí použijeme verzi z VERSION
+            echo "image_tag=${{ steps.check.outputs.version }}" >> $GITHUB_OUTPUT
           else
-              echo "is_deploy_ready=false" | tee -a $GITHUB_OUTPUT
+            # Pro ostatní případy použijeme název větve za posledním lomítkem
+            branch_name="${GITHUB_REF#refs/heads/}"
+            branch_name="${branch_name#refs/tags/}"
+            image_tag="${branch_name##*/}"
+            echo "image_tag=$image_tag" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if should deploy
+        id: deploy_check
+        run: |
+          if [ "${{ steps.tag_check.outputs.is_semantic_tag }}" = "true" ] && \
+             [ "${{ steps.check.outputs.has_version_change }}" = "true" ]; then
+            echo "Conditions met - will deploy"
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "Conditions not met - will not deploy"
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
           fi
 
   build:
     name: Docker Image Build
     runs-on: ubuntu-latest
-    needs:
-      - push_event_info
+    needs: [ check_version ]
     env:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
@@ -106,7 +108,7 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     needs:
-      - push_event_info
+      - check_version
       - build
     steps:
       - name: Set up Docker Buildx
@@ -129,7 +131,7 @@ jobs:
   tests-kbc:
     name: Run KBC Tests
     needs:
-      - push_event_info
+      - check_version
       - build
     runs-on: ubuntu-latest
     steps:
@@ -151,7 +153,7 @@ jobs:
     name: Docker Image Push
     runs-on: ubuntu-latest
     needs:
-      - push_event_info
+      - check_version
       - tests
       - tests-kbc
     env:
@@ -191,10 +193,10 @@ jobs:
     env:
       KBC_DEVELOPERPORTAL_PASSWORD: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
     needs:
-      - push_event_info
+      - check_version
       - build
       - push
-    if: needs.push_event_info.outputs.is_deploy_ready == 'true'
+    if: needs.check_version.outputs.should_deploy == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Set Developer Portal Tag
@@ -211,11 +213,11 @@ jobs:
     env:
       KBC_DEVELOPERPORTAL_PASSWORD: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
     needs:
-      - push_event_info
+      - check_version
       - build
       - push
     runs-on: ubuntu-latest
-    if: needs.push_event_info.outputs.is_deploy_ready == 'true'
+    if: needs.check_version.outputs.should_deploy == 'true'
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
