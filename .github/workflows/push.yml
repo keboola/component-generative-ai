@@ -1,12 +1,11 @@
 name: Keboola Component Build & Deploy Pipeline
-on: [push]
-
+on: [ push ]
 concurrency: ci-${{ github.ref }} # to avoid tag collisions in the ECR
 env:
   # repository variables:
-  KBC_DEVELOPERPORTAL_APP: "kds-team.app-generative-ai" # replace with your component id
-  KBC_DEVELOPERPORTAL_VENDOR: "kds-team" # replace with your vendor
   DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
+  KBC_DEVELOPERPORTAL_APP: "kds-team.app-generative-ai"
+  KBC_DEVELOPERPORTAL_VENDOR: "kds-team"
   KBC_DEVELOPERPORTAL_USERNAME: "kds-team+github"
 
   # repository secrets:
@@ -18,69 +17,67 @@ env:
   KBC_STORAGE_TOKEN: ${{ secrets.KBC_STORAGE_TOKEN }} # required for running KBC tests
 
 jobs:
-  check_version:
-    name: Check Version and Branch
+  push_event_info:
+    name: Push Event Info
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.check.outputs.version }}
-      has_version_change: ${{ steps.check.outputs.has_version_change }}
-      is_semantic_tag: ${{ steps.tag_check.outputs.is_semantic_tag }}
-      image_tag: ${{ steps.set_tag.outputs.image_tag }}
-      should_deploy: ${{ steps.deploy_check.outputs.should_deploy }}
+      app_image_tag: ${{ steps.tag.outputs.app_image_tag }}
+      is_semantic_tag: ${{ steps.tag.outputs.is_semantic_tag }}
+      is_default_branch: ${{ steps.default_branch.outputs.is_default_branch }}
+      is_deploy_ready: ${{ steps.deploy_ready.outputs.is_deploy_ready }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Check if semantic tag
-        id: tag_check
+      - name: Fetch all branches from remote repository
+        run: git fetch --prune --unshallow --tags -f
+
+      - name: Get current branch name
+        id: current_branch
         run: |
-          # Get current branch/tag name
-          ref_name="${{ github.ref }}"
-          name="${ref_name#refs/tags/}"
-          name="${name#refs/heads/}"
-          echo "Current ref name: $name"
-          
-          # Check if semantic version
-          if echo "$name" | grep -qE '^([a-zA-Z0-9-]+-)?([0-9]+\.[0-9]+\.[0-9]+)$'; then
-            echo "Valid semantic version detected"
-            echo "is_semantic_tag=true" >> $GITHUB_OUTPUT
+          if [[ ${{ github.ref }} != "refs/tags/"* ]]; then
+            branch_name=${{ github.ref_name }}
+            echo "branch_name=$branch_name" | tee -a $GITHUB_OUTPUT
           else
-            echo "Not a semantic version"
-            echo "is_semantic_tag=false" >> $GITHUB_OUTPUT
+            raw=$(git branch -r --contains ${{ github.ref }})
+            branch="$(echo $raw | sed "s/.*origin\///" | tr -d '\n')"
+            echo "branch_name=$branch" | tee -a $GITHUB_OUTPUT
+          fi
+
+      - name: Is current branch the default branch
+        id: default_branch
+        run: |
+          echo "default_branch='${{ github.event.repository.default_branch }}'"
+          if [ "${{ github.event.repository.default_branch }}" = "${{ steps.current_branch.outputs.branch_name }}" ]; then
+             echo "is_default_branch=true" | tee -a $GITHUB_OUTPUT
+          else
+             echo "is_default_branch=false" | tee -a $GITHUB_OUTPUT
           fi
 
       - name: Set image tag
-        id: set_tag
+        id: tag
         run: |
-          if [ "${{ steps.tag_check.outputs.is_semantic_tag }}" = "true" ] && \
-             [ "${{ steps.check.outputs.has_version_change }}" = "true" ]; then
-            # Pro semantický tag s novou verzí použijeme verzi z VERSION
-            echo "image_tag=${{ steps.check.outputs.version }}" >> $GITHUB_OUTPUT
-          else
-            # Pro ostatní případy použijeme název větve za posledním lomítkem
-            branch_name="${GITHUB_REF#refs/heads/}"
-            branch_name="${branch_name#refs/tags/}"
-            image_tag="${branch_name##*/}"
-            echo "image_tag=$image_tag" >> $GITHUB_OUTPUT
-          fi
+          TAG=${{ github.ref_name }}
+          IS_SEMANTIC_TAG=$(echo "$TAG" | grep -q '^v\?[0-9]\+\.[0-9]\+\.[0-9]\+$' && echo true || echo false)
+          echo "is_semantic_tag=$IS_SEMANTIC_TAG" | tee -a $GITHUB_OUTPUT
+          echo "app_image_tag=$TAG" | tee -a $GITHUB_OUTPUT
 
-      - name: Check if should deploy
-        id: deploy_check
+      - name: Deploy-Ready check
+        id: deploy_ready
         run: |
-          if [ "${{ steps.tag_check.outputs.is_semantic_tag }}" = "true" ] && \
-             [ "${{ steps.check.outputs.has_version_change }}" = "true" ]; then
-            echo "Conditions met - will deploy"
-            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          if [[ "${{ steps.default_branch.outputs.is_default_branch }}" == "true" \
+            && "${{ github.ref }}" == refs/tags/* \
+            && "${{ steps.tag.outputs.is_semantic_tag }}" == "true" ]]; then
+              echo "is_deploy_ready=true" | tee -a $GITHUB_OUTPUT
           else
-            echo "Conditions not met - will not deploy"
-            echo "should_deploy=false" >> $GITHUB_OUTPUT
+              echo "is_deploy_ready=false" | tee -a $GITHUB_OUTPUT
           fi
 
   build:
     name: Docker Image Build
     runs-on: ubuntu-latest
-    needs: [ check_version ]
+    needs:
+      - push_event_info
     env:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
@@ -108,7 +105,7 @@ jobs:
     name: Run Tests
     runs-on: ubuntu-latest
     needs:
-      - check_version
+      - push_event_info
       - build
     steps:
       - name: Set up Docker Buildx
@@ -130,30 +127,28 @@ jobs:
 
   tests-kbc:
     name: Run KBC Tests
+    env:
+      KBC_TEST_PROJECT_CONFIGS: ${{ vars.KBC_TEST_PROJECT_CONFIGS }}
+      KBC_STORAGE_TOKEN: ${{ secrets.KBC_STORAGE_TOKEN }}
     needs:
-      - check_version
+      - push_event_info
       - build
     runs-on: ubuntu-latest
     steps:
-      - name: Set up environment variables
-        run: |
-          echo "KBC_TEST_PROJECT_CONFIGS=${KBC_TEST_PROJECT_CONFIGS}" >> $GITHUB_ENV
-          echo "KBC_STORAGE_TOKEN=${{ secrets.KBC_STORAGE_TOKEN }}" >> $GITHUB_ENV
-
       - name: Run KBC test jobs
-        if: env.KBC_TEST_PROJECT_CONFIGS != '' && env.KBC_STORAGE_TOKEN != ''
+        if: ${{ env.KBC_TEST_PROJECT_CONFIGS != '' }} && ${{ env.KBC_STORAGE_TOKEN != '' }}
         uses: keboola/action-run-configs-parallel@master
         with:
           token: ${{ secrets.KBC_STORAGE_TOKEN }}
           componentId: ${{ env.KBC_DEVELOPERPORTAL_APP }}
-          tag: ${{ needs.check_version.outputs.image_tag }}
+          tag: ${{ needs.push_event_info.outputs.app_image_tag }}
           configs: ${{ env.KBC_TEST_PROJECT_CONFIGS }}
 
   push:
     name: Docker Image Push
     runs-on: ubuntu-latest
     needs:
-      - check_version
+      - push_event_info
       - tests
       - tests-kbc
     env:
@@ -184,8 +179,8 @@ jobs:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           username: ${{ env.KBC_DEVELOPERPORTAL_USERNAME }}
           password: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
-          tag: ${{ needs.check_version.outputs.image_tag }}
-          push_latest: ${{ needs.check_version.outputs.should_deploy }}
+          tag: ${{ needs.push_event_info.outputs.app_image_tag }}
+          push_latest: ${{ needs.push_event_info.outputs.is_deploy_ready }}
           source_image: ${{ env.KBC_DEVELOPERPORTAL_APP }}
 
   deploy:
@@ -193,10 +188,10 @@ jobs:
     env:
       KBC_DEVELOPERPORTAL_PASSWORD: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
     needs:
-      - check_version
+      - push_event_info
       - build
       - push
-    if: needs.check_version.outputs.should_deploy == 'true'
+    if: needs.push_event_info.outputs.is_deploy_ready == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Set Developer Portal Tag
@@ -206,18 +201,18 @@ jobs:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           username: ${{ env.KBC_DEVELOPERPORTAL_USERNAME }}
           password: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
-          tag: ${{ needs.check_version.outputs.image_tag }}
+          tag: ${{ needs.push_event_info.outputs.app_image_tag }}
 
   update_developer_portal_properties:
     name: Developer Portal Properties Update
     env:
       KBC_DEVELOPERPORTAL_PASSWORD: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
     needs:
-      - check_version
+      - push_event_info
       - build
       - push
     runs-on: ubuntu-latest
-    if: needs.check_version.outputs.should_deploy == 'true'
+    if: needs.push_event_info.outputs.is_deploy_ready == 'true'
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
