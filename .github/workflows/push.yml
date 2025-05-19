@@ -146,7 +146,7 @@ jobs:
         with:
           token: ${{ secrets.KBC_STORAGE_TOKEN }}
           componentId: ${{ env.KBC_DEVELOPERPORTAL_APP }}
-          tag: ${{ needs.push_event_info.outputs.app_image_tag }}
+          tag: ${{ needs.check_version.outputs.image_tag }}
           configs: ${{ env.KBC_TEST_PROJECT_CONFIGS }}
 
   push:
@@ -184,8 +184,8 @@ jobs:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           username: ${{ env.KBC_DEVELOPERPORTAL_USERNAME }}
           password: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
-          tag: ${{ needs.push_event_info.outputs.app_image_tag }}
-          push_latest: ${{ needs.push_event_info.outputs.is_deploy_ready }}
+          tag: ${{ needs.check_version.outputs.image_tag }}
+          push_latest: ${{ needs.check_version.outputs.should_deploy }}
           source_image: ${{ env.KBC_DEVELOPERPORTAL_APP }}
 
   deploy:
@@ -206,7 +206,7 @@ jobs:
           app_id: ${{ env.KBC_DEVELOPERPORTAL_APP }}
           username: ${{ env.KBC_DEVELOPERPORTAL_USERNAME }}
           password: ${{ secrets.KBC_DEVELOPERPORTAL_PASSWORD }}
-          tag: ${{ needs.push_event_info.outputs.app_image_tag }}
+          tag: ${{ needs.check_version.outputs.image_tag }}
 
   update_developer_portal_properties:
     name: Developer Portal Properties Update
