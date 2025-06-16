@@ -201,12 +201,8 @@ class Component(ComponentBase):
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         processed_results = []
-        for i, res in enumerate(results):
-            if res is None:
-                logging.warning(f"Task for row {rows[i]} resulted in a None result. Prompt: '{prompts[i]}'")
-            elif isinstance(res, BaseException):
-                logging.error(f"Task for row {rows[i]} failed with an exception: {res}")
-            else:
+        for res in results:
+            if res is not None:
                 processed_results.append(res)
         return processed_results
 
