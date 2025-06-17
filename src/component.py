@@ -198,7 +198,9 @@ class Component(ComponentBase):
         for row, prompt in zip(rows, prompts):
             tasks.append(self._infer(client, row, prompt))
 
-        return await asyncio.gather(*tasks)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        return [r for r in results if r is not None]
 
     async def _infer(self, client, row, prompt):
 
@@ -224,6 +226,7 @@ class Component(ComponentBase):
         if result:
             return self._build_output_row(row, result)
         else:
+            logging.warning(f"Empty result received for row {row}")
             self.failed_requests += 1
 
     def prepare_tables(self):
