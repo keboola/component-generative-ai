@@ -200,11 +200,7 @@ class Component(ComponentBase):
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        processed_results = []
-        for res in results:
-            if res is not None:
-                processed_results.append(res)
-        return processed_results
+        return [r for r in results if r is not None]
 
     async def _infer(self, client, row, prompt):
 
