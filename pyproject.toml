@@ -1,0 +1,25 @@
+[project]
+name = "generative-ai"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "aiolimiter>=1.2.1",
+    "anthropic==0.42.0",
+    "backoff>=2.2.1",
+    "dataconf>=3.6.0",
+    "freezegun==1.2.2",
+    "google-generativeai==0.8.3",
+    "grpcio==1.67.1",
+    "kbcstorage==0.7.2",
+    "keboola-component==1.4.4",
+    "keboola-http-client",
+    "keboola-utils==1.1.0",
+    "mock==4.0.3",
+    "openai==1.99.9",
+    "pystache>=0.6.8",
+]
+
+[tool.uv.sources]
+keboola-http-client = { git = "https://github.com/SgtMarmite/python-http-client.git", rev = "async-http-client" }
