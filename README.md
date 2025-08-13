@@ -55,6 +55,7 @@ For information on retrieving your API key, API Base, and Deployment ID, refer t
 **Additional Options:**
 
 - **Max Tokens (`max_tokens`):** Maximum number of tokens for the completion. The token count of your prompt plus `max_tokens` should not exceed the model's context length. Most models support up to 2048 tokens, with the newest ones supporting 4096.
+> NOTE: When using OpenAI models. The `max_tokens` is changed to `max_completion_tokens` on the backend.
 - **Temperature (`temperature`):** Sampling temperature between [0-1]. Higher values result in riskier outputs. Use 0.9 for creativity, and 0 for well-defined answers.
 - **Top P (`top_p`):** Nucleus sampling, where only tokens with top_p probability mass are considered. For instance, 0.1 means only the top 10% probability mass tokens are evaluated.
 - **Frequency Penalty (`frequency_penalty`):** A number between -2.0 and 2.0. Positive values penalize frequently occurring tokens in the current text, reducing repetition.
