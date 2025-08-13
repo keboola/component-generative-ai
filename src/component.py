@@ -134,7 +134,7 @@ class Component(ComponentBase):
         logging.info(f"The component is using the model: {self.model}")
 
         self.model_options = dataclasses.asdict(self._configuration.additional_options)
-        
+
         # Map max_tokens to max_completion_tokens for OpenAI services
         if self.service in ["openai", "azure_openai"] and self._configuration.additional_options.max_tokens > 0:
             self.model_options["max_completion_tokens"] = self._configuration.additional_options.max_tokens
