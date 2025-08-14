@@ -6,8 +6,10 @@ RUN apt-get update && apt-get install -y git
 WORKDIR /code/
 
 COPY pyproject.toml .
+COPY uv.lock .
 
-RUN uv pip install --system .
+ENV UV_PROJECT_ENVIRONMENT="/usr/local/"
+RUN uv sync --all-groups --frozen
 
 COPY src/ .
 COPY tests/ .
