@@ -34,20 +34,16 @@ class AnthropicClient(CommonClient):
         except AnthropicError:
             raise AIClientException(f"The component is unable to use model {model_name}. Please check your API key.")
 
-    async def get_chat_completion_result(self, model_name: str, prompt: str, **model_options) \
-            -> Tuple[Optional[str], Optional[int]]:
-
-        max_tokens = model_options.get('max_tokens', 1024)
+    async def get_chat_completion_result(
+        self, model_name: str, prompt: str, **model_options
+    ) -> Tuple[Optional[str], Optional[int]]:
+        max_tokens = model_options.get("max_tokens", 1024)
         messages = [{"role": "user", "content": prompt}]
 
         # Use semaphore to limit parallelism due to lower token per minute limit
         async with self.semaphore:
             try:
-                response = await self.client.messages.create(
-                    max_tokens=max_tokens,
-                    model=model_name,
-                    messages=messages
-                )
+                response = await self.client.messages.create(max_tokens=max_tokens, model=model_name, messages=messages)
             except AnthropicError as e:
                 raise AIClientException(f"Encountered AnthropicError: {e}")
 

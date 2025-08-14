@@ -13,8 +13,7 @@ class GoogleAIClient(CommonClient):
         self.model = None
 
     @backoff.on_exception(backoff.expo, google.api_core.exceptions.ResourceExhausted, max_time=60)
-    async def infer(self, model_name: str, prompt: str, **model_options) \
-            -> Tuple[Optional[str], Optional[int]]:
+    async def infer(self, model_name: str, prompt: str, **model_options) -> Tuple[Optional[str], Optional[int]]:
         if not self.model:
             self.model = genai.GenerativeModel(model_name=model_name)
 
@@ -43,6 +42,6 @@ class GoogleAIClient(CommonClient):
 
     async def list_models(self) -> list:
         models_with_generate_content = [
-            m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods
+            m.name for m in genai.list_models() if "generateContent" in m.supported_generation_methods
         ]
         return models_with_generate_content

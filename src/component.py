@@ -2,6 +2,7 @@
 Template Component main class.
 
 """
+
 import asyncio
 import csv
 import dataclasses
@@ -30,15 +31,15 @@ from client.openai_client import OpenAIClient, AzureOpenAIClient
 from configuration import Configuration
 
 # configuration variables
-RESULT_COLUMN_NAME = 'result_value'
-KEY_API_TOKEN = '#api_token'
-KEY_PROMPT = 'prompt'
-KEY_DESTINATION = 'destination'
+RESULT_COLUMN_NAME = "result_value"
+KEY_API_TOKEN = "#api_token"
+KEY_PROMPT = "prompt"
+KEY_DESTINATION = "destination"
 
-KEY_DEFAULT_API_TOKEN = '#default_api_token'
-KEY_DEFAULT_API_TOKEN_HUGGINGFACE = '#default_api_token_huggingface'
+KEY_DEFAULT_API_TOKEN = "#default_api_token"
+KEY_DEFAULT_API_TOKEN_HUGGINGFACE = "#default_api_token_huggingface"
 
-KEY_ENDPOINT_URL = 'endpoint_url'
+KEY_ENDPOINT_URL = "endpoint_url"
 
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
@@ -47,7 +48,7 @@ REQUIRED_PARAMETERS = [KEY_PROMPT, KEY_DESTINATION]
 PREVIEW_LIMIT = 5
 BATCH_SIZE = 10
 LOG_EVERY = 100
-PROMPT_TEMPLATES = 'templates/prompts.json'
+PROMPT_TEMPLATES = "templates/prompts.json"
 
 # to prevent field larger than field limit (131072) Errors
 # https://stackoverflow.com/questions/15063936/csv-error-field-larger-than-field-limit-131072
@@ -55,7 +56,6 @@ csv.field_size_limit(sys.maxsize)
 
 
 class Component(ComponentBase):
-
     def __init__(self):
         super().__init__()
         self.table_rows: int = 0
@@ -112,12 +112,14 @@ class Component(ComponentBase):
 
         if self._configuration.max_token_spend > 0:
             self.max_token_spend = self._configuration.max_token_spend
-            logging.warning(f"Max token spend has been set to {self.max_token_spend}. If the component reaches "
-                            f"this limit, it will exit.")
+            logging.warning(
+                f"Max token spend has been set to {self.max_token_spend}. If the component reaches "
+                f"this limit, it will exit."
+            )
 
         self.input_keys = self._get_input_keys(self._configuration.prompt_options.prompt)
 
-        self.queue_v2 = 'queuev2' in os.environ.get('KBC_PROJECT_FEATURE_GATES', '')
+        self.queue_v2 = "queuev2" in os.environ.get("KBC_PROJECT_FEATURE_GATES", "")
         if self.queue_v2:
             logging.info("Component will try to save results even if some queries fail.")
         else:
@@ -137,9 +139,7 @@ class Component(ComponentBase):
 
         # Map max_tokens to max_completion_tokens for OpenAI services
         if self.service in ["openai", "azure_openai"] and self._configuration.additional_options.max_tokens > 0:
-            self.model_options["max_completion_tokens"] = self._configuration.additional_options.max_tokens
-            if "max_tokens" in self.model_options:
-                del self.model_options["max_tokens"]
+            self.model_options["max_completion_tokens"] = self.model_options.pop("max_tokens")
 
     def get_client(self):
         if self.service == "openai":
@@ -167,11 +167,10 @@ class Component(ComponentBase):
             raise UserException(f"{self.service} service is not implemented yet.")
 
     async def process_prompts(self, client, input_table, out_table) -> None:
-
-        with open(input_table.full_path, 'r') as input_file:
+        with open(input_table.full_path, "r") as input_file:
             reader = csv.DictReader(input_file)
 
-            with open(out_table.full_path, 'w+') as out_file:
+            with open(out_table.full_path, "w+") as out_file:
                 writer = csv.DictWriter(out_file, fieldnames=self.out_table_columns)
                 writer.writeheader()
                 rows = []
@@ -185,8 +184,10 @@ class Component(ComponentBase):
 
                     if self.max_token_spend != 0 and self.tokens_used >= self.max_token_spend:
                         self.token_limit_reached = True
-                        logging.warning(f"The token spend limit of {self.max_token_spend} has been reached. "
-                                        f"The component will stop after completing current batch.")
+                        logging.warning(
+                            f"The token spend limit of {self.max_token_spend} has been reached. "
+                            f"The component will stop after completing current batch."
+                        )
                         break
 
                 # Process remaining rows
@@ -209,7 +210,6 @@ class Component(ComponentBase):
         return [r for r in results if r is not None]
 
     async def _infer(self, client, row, prompt):
-
         try:
             result, token_usage = await client.infer(model_name=self.model, prompt=prompt, **self.model_options)
 
@@ -243,7 +243,7 @@ class Component(ComponentBase):
         out_table = self._build_out_table(input_table)
 
         if missing_keys := [t for t in out_table.primary_key if t not in input_table.columns]:
-            raise UserException(f'Some specified primary keys are not in the input table: {missing_keys}')
+            raise UserException(f"Some specified primary keys are not in the input table: {missing_keys}")
 
         return input_table, out_table
 
@@ -254,7 +254,7 @@ class Component(ComponentBase):
         return output_row
 
     def _build_out_table(self, input_table: TableDefinition) -> TableDefinition:
-        destination_config = self.configuration.parameters['destination']
+        destination_config = self.configuration.parameters["destination"]
 
         if not (out_table_name := destination_config.get("output_table_name")):
             out_table_name = f"app-generative-ai-{self.environment_variables.config_row_id}.csv"
@@ -263,18 +263,19 @@ class Component(ComponentBase):
 
         self.out_table_columns = input_table.columns + [RESULT_COLUMN_NAME]
 
-        primary_key = destination_config.get('primary_keys_array', [])
+        primary_key = destination_config.get("primary_keys_array", [])
 
-        incremental_load = destination_config.get('incremental_load', False)
-        return self.create_out_table_definition(out_table_name, columns=[], primary_key=primary_key,
-                                                incremental=incremental_load)
+        incremental_load = destination_config.get("incremental_load", False)
+        return self.create_out_table_definition(
+            out_table_name, columns=[], primary_key=primary_key, incremental=incremental_load
+        )
 
     @staticmethod
     def _get_input_keys(prompt: str):
-        template = pystache.parse(prompt, delimiters=('[[', ']]'))
+        template = pystache.parse(prompt, delimiters=("[[", "]]"))
         keys = [token.key for token in template._parse_tree if hasattr(token, "key")]  # noqa
         if len(keys) < 1:
-            raise UserException('You must provide at least one input placeholder. 0 were found.')
+            raise UserException("You must provide at least one input placeholder. 0 were found.")
 
         unique_keys = list(dict.fromkeys(keys))
         return unique_keys
@@ -282,7 +283,7 @@ class Component(ComponentBase):
     def _build_prompt(self, input_keys: List[str], row: dict):
         prompt = self._configuration.prompt_options.prompt
         for input_key in input_keys:
-            prompt = prompt.replace('[[' + input_key + ']]', row[input_key])
+            prompt = prompt.replace("[[" + input_key + "]]", row[input_key])
         return prompt
 
     def _get_input_table(self) -> TableDefinition:
@@ -295,16 +296,16 @@ class Component(ComponentBase):
         return self.get_input_tables_definitions()[0]
 
     def add_flag_to_manifest(self):
-        manifests = [x for x in os.listdir(self.tables_out_path) if x.endswith('.manifest')]
+        manifests = [x for x in os.listdir(self.tables_out_path) if x.endswith(".manifest")]
         if manifests:
             for filename in manifests:
                 path = os.path.join(self.tables_out_path, filename)
 
-                with open(path, 'r') as f:
+                with open(path, "r") as f:
                     data = json.load(f)
-                    data['write_always'] = True
+                    data["write_always"] = True
 
-                with open(path, 'w') as f:
+                with open(path, "w") as f:
                     json.dump(data, f)
 
     def estimate_token_usage(self, preview_size: int, table_size: int) -> int:
@@ -354,8 +355,11 @@ class Component(ComponentBase):
         return rows_count
 
     def _get_kbc_root_url(self) -> str:
-        return f'https://{self.environment_variables.stack_id}' if self.environment_variables.stack_id \
+        return (
+            f"https://{self.environment_variables.stack_id}"
+            if self.environment_variables.stack_id
             else "https://connection.keboola.com"
+        )
 
     def _get_storage_source(self) -> str:
         storage_config = self.configuration.config_data.get("storage")
@@ -365,13 +369,15 @@ class Component(ComponentBase):
         return source
 
     def _get_storage_token(self) -> str:
-        return self.configuration.parameters.get('#storage_token') or self.environment_variables.token
+        return self.configuration.parameters.get("#storage_token") or self.environment_variables.token
 
     def _set_tokens_limit(self) -> any:
         if self._configuration.max_token_spend > 0:
             self.max_token_spend = self._configuration.max_token_spend
-            logging.warning(f"Max token spend has been set to {self.max_token_spend}. If the component reaches "
-                            f"this limit, it will exit.")
+            logging.warning(
+                f"Max token spend has been set to {self.max_token_spend}. If the component reaches "
+                f"this limit, it will exit."
+            )
 
     def _get_table_columns(self, table_id: str) -> list:
         client = Client(self._get_kbc_root_url(), self._get_storage_token())
@@ -383,12 +389,12 @@ class Component(ComponentBase):
 
     @staticmethod
     def count_rows(file_path):
-        with open(file_path, 'r', encoding='utf-8') as file:
+        with open(file_path, "r", encoding="utf-8") as file:
             reader = csv.reader(file)
             row_count = sum(1 for _ in reader) - 1
         return row_count
 
-    @sync_action('listPkeys')
+    @sync_action("listPkeys")
     def list_table_columns(self):
         """
         Sync action to fill the UI element for primary keys selection.
@@ -401,7 +407,7 @@ class Component(ComponentBase):
         columns = self._get_table_columns(table_id)
         return [{"value": c, "label": c} for c in columns]
 
-    @sync_action('testPrompt')
+    @sync_action("testPrompt")
     def test_prompt(self) -> ValidationResult:
         """
         Uses table preview from sapi to apply prompt for on a few table rows.
@@ -413,8 +419,10 @@ class Component(ComponentBase):
 
         table_id = self._get_storage_source()
         if len(self.input_keys) > 30:
-            raise UserException(f"Test prompt is available only for up to 30 placeholders. "
-                                f"You have {len(self.input_keys)} placeholders.")
+            raise UserException(
+                f"Test prompt is available only for up to 30 placeholders. "
+                f"You have {len(self.input_keys)} placeholders."
+            )
 
         table_preview = self._get_table_preview(table_id, columns=self.input_keys, limit=PREVIEW_LIMIT)
 
@@ -456,12 +464,12 @@ class Component(ComponentBase):
 
         return await asyncio.gather(*tasks)
 
-    @sync_action('getPromptTemplate')
+    @sync_action("getPromptTemplate")
     def get_prompt_template(self) -> ValidationResult:
         configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
         template = configuration.prompt_templates.prompt_template
 
-        with open('src/templates/prompts.json', 'r') as json_file:
+        with open("src/templates/prompts.json", "r") as json_file:
             templates = json.load(json_file)
 
         prompt = templates.get(template)
@@ -469,7 +477,7 @@ class Component(ComponentBase):
             raise UserException(f"Prompt template {template} does not exist!")
         return ValidationResult(prompt, MessageType.SUCCESS)
 
-    @sync_action('listModels')
+    @sync_action("listModels")
     def list_models(self):
         authentication = self.configuration.parameters.get("authentication")
         self.service = authentication.get("service")
