@@ -7,9 +7,9 @@ from httpx import HTTPStatusError
 from keboola.http_client import AsyncHttpClient
 
 SUPPORTED_MODELS = {
-    "Serverless/Meta-Llama-3-8B-Instruct": "https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct", # noqa
-    "Serverless/Mistral-Nemo-Instruct-2407": "https://api-inference.huggingface.co/models/mistralai/Mistral-Nemo-Instruct-2407", # noqa
-    "Serverless/Phi-3-mini-4k-instruct": "https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct"
+    "Serverless/Meta-Llama-3-8B-Instruct": "https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct",  # noqa
+    "Serverless/Mistral-Nemo-Instruct-2407": "https://api-inference.huggingface.co/models/mistralai/Mistral-Nemo-Instruct-2407",  # noqa
+    "Serverless/Phi-3-mini-4k-instruct": "https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct",
 }
 
 
@@ -22,21 +22,24 @@ class HuggingfaceClient(CommonClient):
         self.client = None
         self.endpoint_url = endpoint_url
         self.headers = {
-            'Accept': 'application/json',
-            'Authorization': f'Bearer {api_key}',
-            'Content-Type': 'application/json'
+            "Accept": "application/json",
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
         }
 
     async def infer(self, model_name: str, prompt: str, **model_options) -> Tuple[Optional[str], Optional[int]]:
         if model_name not in SUPPORTED_MODELS and model_name != "custom_model":
-            raise AIClientException(f"Model {model_name} is not supported. "
-                                    f"Supported models: {list(SUPPORTED_MODELS.keys())}")
+            raise AIClientException(
+                f"Model {model_name} is not supported. Supported models: {list(SUPPORTED_MODELS.keys())}"
+            )
 
         if not self.client:
-
             base_url = self._get_base_url(model_name)
-            self.client = AsyncHttpClient(base_url=base_url, default_headers=self.headers,
-                                          max_requests_per_second=1)
+            self.client = AsyncHttpClient(
+                base_url=base_url,
+                default_headers=self.headers,
+                max_requests_per_second=1,
+            )
 
         max_new_tokens = model_options.get("max_tokens")
         model_options = {"max_new_tokens": max_new_tokens} if max_new_tokens else {}
@@ -55,22 +58,20 @@ class HuggingfaceClient(CommonClient):
     async def generate_text(self, prompt: str, model_name: str, **model_options) -> str:
         endpoint = SUPPORTED_MODELS.get(model_name)
 
-        data = {
-            'inputs': prompt,
-            'parameters': model_options
-        }
+        data = {"inputs": prompt, "parameters": model_options}
 
         try:
             result = await self.client.post(endpoint, json=data)
         except HTTPStatusError as e:
             if self._is_asleep(e.response.status_code):
-                logging.warning("The model is currently sleeping. The component will now wait "
-                                "for the model to wake up.")
+                logging.warning(
+                    "The model is currently sleeping. The component will now wait for the model to wake up."
+                )
                 raise IsSleepingException()
             else:
                 raise AIClientException(f"HTTP error occurred: {e.response.status_code} {e.response.reason_phrase}")
 
-        return result[0]['generated_text']
+        return result[0]["generated_text"]
 
     def _get_base_url(self, model_name: str) -> str:
         if model_name == "custom_model":
@@ -81,8 +82,9 @@ class HuggingfaceClient(CommonClient):
             try:
                 base_url = SUPPORTED_MODELS[model_name]
             except KeyError:
-                raise AIClientException(f"Model {model_name} is not supported. "
-                                        f"Supported models: {list(SUPPORTED_MODELS.keys())}")
+                raise AIClientException(
+                    f"Model {model_name} is not supported. Supported models: {list(SUPPORTED_MODELS.keys())}"
+                )
 
         return base_url
 
