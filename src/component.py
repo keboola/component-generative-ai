@@ -439,7 +439,7 @@ class Component(ComponentBase):
         results = asyncio.run(self._test_prompt(client, rows))
 
         output = []
-        if len(results) > 0:
+        if len(results) > 0 and results != [None]:
             for res in results:
                 o = res.get(RESULT_COLUMN_NAME, "")
                 output.append(o)
