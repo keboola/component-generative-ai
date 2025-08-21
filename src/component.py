@@ -473,12 +473,17 @@ class Component(ComponentBase):
         results = asyncio.run(self._test_prompt(client, rows))
 
         output = []
-        if len(results) > 0 and results != [None]:
+        empty_results = 0
+        if len(results) > 0:
             for res in results:
-                o = res.get(RESULT_COLUMN_NAME, "")
-                output.append(o)
+                if res is None:
+                    empty_results += 1
+                else:
+                    o = res.get(RESULT_COLUMN_NAME, "")
+                    output.append(o)
 
         if output:
+            messageType = MessageType.SUCCESS
             estimated_token_usage = self.estimate_token_usage(preview_size, table_size)
 
             markdown = self.create_markdown_table(output)
@@ -486,9 +491,14 @@ class Component(ComponentBase):
             token_estimation_info = f"\nEstimated token usage for the whole input table: {estimated_token_usage}"
             markdown += tokens_used_info
             markdown += token_estimation_info
-            return ValidationResult(markdown, MessageType.SUCCESS)
+            if empty_results > 0:
+                markdown += f"\nEmpty results: {empty_results}. Try to increase the max tokens parameter."
+                messageType = MessageType.WARNING
+            return ValidationResult(markdown, messageType)
         else:
-            return ValidationResult("Query returned no data.", MessageType.WARNING)
+            return ValidationResult(
+                "Query returned no data. Try to increase the max tokens parameter.", MessageType.WARNING
+            )
 
     async def _test_prompt(self, client, rows):
         tasks = []
