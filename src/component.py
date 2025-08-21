@@ -497,11 +497,11 @@ class Component(ComponentBase):
             markdown += token_estimation_info
             if empty_results > 0:
                 markdown += f"\nEmpty results: {empty_results}. Try to increase the max tokens parameter."
-                messageType = MessageType.WARNING
+            # messageType = MessageType.WARNING
             return ValidationResult(markdown, messageType)
         else:
             return ValidationResult(
-                "Query returned no data. Try to increase the max tokens parameter.", MessageType.WARNING
+                "Query returned no data. Try to increase the max tokens parameter.", MessageType.SUCCESS
             )
 
     async def _test_prompt(self, client, rows):
