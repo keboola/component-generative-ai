@@ -501,7 +501,7 @@ class Component(ComponentBase):
             return ValidationResult(markdown, messageType)
         else:
             return ValidationResult(
-                "Query returned no data. Try to increase the max tokens parameter.", MessageType.SUCCESS
+                "Query returned no data. Try to increase the max tokens parameter.", MessageType.WARNING
             )
 
     async def _test_prompt(self, client, rows):
