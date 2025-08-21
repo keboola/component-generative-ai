@@ -152,7 +152,7 @@ class Component(ComponentBase):
 
         self.model_options = dataclasses.asdict(self._configuration.additional_options)
 
-        # Map max_tokens to max_completion_tokens for OpenAI services
+        # Map max_tokens to max_completion_tokens for OpenAI reasoning models
         if (
             self.service in ["openai", "azure_openai"]
             and self._configuration.additional_options.max_tokens > 0
@@ -160,7 +160,11 @@ class Component(ComponentBase):
         ):
             self.model_options["max_completion_tokens"] = self.model_options.pop("max_tokens")
 
+            # For backward compatibility, remove reasoning_effort if it is None
+            if self.model_options["reasoning_effort"] is None:
+                self.model_options.pop("reasoning_effort")
         else:
+            # For non-reasoning models and no OpenAI Service, remove reasoning_effort if it exists
             self.model_options.pop("reasoning_effort")
 
     def get_client(self):
