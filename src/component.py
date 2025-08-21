@@ -50,6 +50,21 @@ BATCH_SIZE = 10
 LOG_EVERY = 100
 PROMPT_TEMPLATES = "templates/prompts.json"
 
+OPENAI_REASONING_MODELS = [
+    "gpt-5",
+    "gpt-5-mini",
+    "gpt-5-nano",
+    "o1-mini",
+    "o1",
+    "o3-mini",
+    "o1-pro",
+    "o3",
+    "o4-mini",
+    "o3-pro",
+    "o3-deep-research",
+    "o4-mini-deep-research",
+]
+
 # to prevent field larger than field limit (131072) Errors
 # https://stackoverflow.com/questions/15063936/csv-error-field-larger-than-field-limit-131072
 csv.field_size_limit(sys.maxsize)
@@ -138,8 +153,15 @@ class Component(ComponentBase):
         self.model_options = dataclasses.asdict(self._configuration.additional_options)
 
         # Map max_tokens to max_completion_tokens for OpenAI services
-        if self.service in ["openai", "azure_openai"] and self._configuration.additional_options.max_tokens > 0:
+        if (
+            self.service in ["openai", "azure_openai"]
+            and self._configuration.additional_options.max_tokens > 0
+            and self.is_valid_reasoning_model(self.model)
+        ):
             self.model_options["max_completion_tokens"] = self.model_options.pop("max_tokens")
+
+        else:
+            self.model_options.pop("reasoning_effort")
 
     def get_client(self):
         if self.service == "openai":
@@ -246,6 +268,18 @@ class Component(ComponentBase):
             raise UserException(f"Some specified primary keys are not in the input table: {missing_keys}")
 
         return input_table, out_table
+
+    @staticmethod
+    def is_valid_reasoning_model(model: str) -> bool:
+        # Model is in the list of reasoning models
+        if model in OPENAI_REASONING_MODELS:
+            return True
+
+        # Model starts with a reasoning model
+        for reasoning_model in OPENAI_REASONING_MODELS:
+            if model.startswith(reasoning_model):
+                return True
+        return False
 
     @staticmethod
     def _build_output_row(input_row: dict, result: str):

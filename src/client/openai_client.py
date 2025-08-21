@@ -47,7 +47,7 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
                 model_name,
                 "This is a test prompt.",
                 timeout=60,
-                max_completion_tokens=20,
+                max_completion_tokens=20
             )
             return self.get_completion_result
         except openai.OpenAIError:
@@ -78,7 +78,6 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
 
         content = response.choices[0].message.content
         token_usage = response.usage.total_tokens
-
         return content, token_usage
 
     async def list_models(self) -> list:
