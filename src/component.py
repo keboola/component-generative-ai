@@ -101,9 +101,6 @@ class Component(ComponentBase):
         """
         Main execution code
         """
-        logging.info("DEBUG: Run test prompt")
-        logging.info(f"DEBUG: test_prompt: {self.test_prompt()}")
-        logging.info("DEBUG: Run Test Prompt finished")
         self.init_configuration()
 
         client = self.get_client()
@@ -473,27 +470,22 @@ class Component(ComponentBase):
         if missing_keys := [key for key in self.input_keys if key not in table_preview[0]]:
             raise UserException(f'The columns "{missing_keys}" need to be present in the input data!')
 
-        logging.info(f"DEBUG: table_preview: {table_preview}")
         rows = []
         for row in table_preview:
             rows.append(row)
 
         results = asyncio.run(self._test_prompt(client, rows))
-        logging.info(f"DEBUG: results: {results}")
 
         output = []
         empty_results = 0
         if len(results) > 0:
             for res in results:
-                logging.info(f"DEBUG: res: {res}")
                 if res is None:
                     empty_results += 1
                 else:
                     o = res.get(RESULT_COLUMN_NAME, "")
                     output.append(o)
 
-        logging.info(f"DEBUG: output: {output}")
-        logging.info(f"DEBUG: empty_results: {empty_results}")
         if output:
             messageType = MessageType.SUCCESS
             estimated_token_usage = self.estimate_token_usage(preview_size, table_size)
@@ -505,8 +497,7 @@ class Component(ComponentBase):
             markdown += token_estimation_info
             if empty_results > 0:
                 markdown += f"\nEmpty results: {empty_results}. Try to increase the max tokens parameter."
-            # messageType = MessageType.WARNING
-            logging.info(f"DEBUG: markdown: {markdown}")
+                messageType = MessageType.WARNING
             return ValidationResult(markdown, messageType)
         else:
             return ValidationResult(
