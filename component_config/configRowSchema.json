@@ -46,7 +46,7 @@
           "type": "string",
           "title": "Reasoning Effort",
           "default": "medium",
-          "description": "The effort level for reasoning models (lower levels decrease token spend). This is only supported for reasoning models in the OpenAI Service. <a href=\"https://platform.openai.com/docs/guides/reasoning\">Learn more.</a>",
+          "description": "The effort level for reasoning models (lower levels decrease token spend). This is only supported for reasoning models in the OpenAI Service. <a href=\"https://platform.openai.com/docs/guides/reasoning\">Learn more</a>",
           "propertyOrder": 1,
           "enum": ["minimal", "low", "medium", "high"],
           "options": {

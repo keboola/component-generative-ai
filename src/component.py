@@ -50,20 +50,6 @@ BATCH_SIZE = 10
 LOG_EVERY = 100
 PROMPT_TEMPLATES = "templates/prompts.json"
 
-OPENAI_REASONING_MODELS = [
-    "gpt-5",
-    "gpt-5-mini",
-    "gpt-5-nano",
-    "o1-mini",
-    "o1",
-    "o3-mini",
-    "o1-pro",
-    "o3",
-    "o4-mini",
-    "o3-pro",
-    "o3-deep-research",
-    "o4-mini-deep-research",
-]
 
 # to prevent field larger than field limit (131072) Errors
 # https://stackoverflow.com/questions/15063936/csv-error-field-larger-than-field-limit-131072
@@ -156,7 +142,7 @@ class Component(ComponentBase):
         if (
             self.service in ["openai", "azure_openai"]
             and self._configuration.additional_options.max_tokens > 0
-            and self.is_valid_reasoning_model(self.model)
+            and self.is_openai_reasoning_model(self.model)
         ):
             self.model_options["max_completion_tokens"] = self.model_options.pop("max_tokens")
 
@@ -274,16 +260,9 @@ class Component(ComponentBase):
         return input_table, out_table
 
     @staticmethod
-    def is_valid_reasoning_model(model: str) -> bool:
-        # Model is in the list of reasoning models
-        if model in OPENAI_REASONING_MODELS:
-            return True
-
-        # Model starts with a reasoning model
-        for reasoning_model in OPENAI_REASONING_MODELS:
-            if model.startswith(reasoning_model):
-                return True
-        return False
+    def is_openai_reasoning_model(model_name: str) -> bool:
+        prefixes = ("gpt-5", "o1", "o3", "o4")
+        return any([model_name.startswith(x) for x in prefixes])
 
     @staticmethod
     def _build_output_row(input_row: dict, result: str):
@@ -491,10 +470,8 @@ class Component(ComponentBase):
             estimated_token_usage = self.estimate_token_usage(preview_size, table_size)
 
             markdown = self.create_markdown_table(output)
-            tokens_used_info = f"\nTokens used during test prompting: {self.tokens_used}"
-            token_estimation_info = f"\nEstimated token usage for the whole input table: {estimated_token_usage}"
-            markdown += tokens_used_info
-            markdown += token_estimation_info
+            markdown += f"\nTokens used during test prompting: {self.tokens_used}"
+            markdown += f"\nEstimated token usage for the whole input table: {estimated_token_usage}"
             if empty_results > 0:
                 markdown += f"\nEmpty results: {empty_results}. Try to increase the max tokens parameter."
                 messageType = MessageType.WARNING

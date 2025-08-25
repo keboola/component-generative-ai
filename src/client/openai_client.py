@@ -47,7 +47,7 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
                 model_name,
                 "This is a test prompt.",
                 timeout=60,
-                max_completion_tokens=20
+                max_completion_tokens=20,
             )
             return self.get_completion_result
         except openai.OpenAIError:

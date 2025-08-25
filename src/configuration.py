@@ -1,7 +1,7 @@
 import dataclasses
 import json
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 
 import dataconf
 
@@ -61,7 +61,7 @@ class AdditionalOptions(ConfigurationBase):
     presence_penalty: float
     frequency_penalty: float
     timeout: int = 60
-    reasoning_effort: Optional[str] = None
+    reasoning_effort: str | None = None
 
 
 @dataclass
