@@ -147,11 +147,11 @@ class Component(ComponentBase):
             self.model_options["max_completion_tokens"] = self.model_options.pop("max_tokens")
 
             # For backward compatibility, remove reasoning_effort if it is None
-            if self.model_options["reasoning_effort"] is None:
-                self.model_options.pop("reasoning_effort")
+            if "reasoning_effort" in self.model_options and self.model_options["reasoning_effort"] is None:
+                self.model_options.pop("reasoning_effort", None)
         else:
             # For non-reasoning models and no OpenAI Service, remove reasoning_effort if it exists
-            self.model_options.pop("reasoning_effort")
+            self.model_options.pop("reasoning_effort", None)
 
     def get_client(self):
         if self.service == "openai":
