@@ -50,6 +50,7 @@ BATCH_SIZE = 10
 LOG_EVERY = 100
 PROMPT_TEMPLATES = "templates/prompts.json"
 
+
 # to prevent field larger than field limit (131072) Errors
 # https://stackoverflow.com/questions/15063936/csv-error-field-larger-than-field-limit-131072
 csv.field_size_limit(sys.maxsize)
@@ -137,9 +138,20 @@ class Component(ComponentBase):
 
         self.model_options = dataclasses.asdict(self._configuration.additional_options)
 
-        # Map max_tokens to max_completion_tokens for OpenAI services
-        if self.service in ["openai", "azure_openai"] and self._configuration.additional_options.max_tokens > 0:
+        # Map max_tokens to max_completion_tokens for OpenAI reasoning models
+        if (
+            self.service in ["openai", "azure_openai"]
+            and self._configuration.additional_options.max_tokens > 0
+            and self.is_openai_reasoning_model(self.model)
+        ):
             self.model_options["max_completion_tokens"] = self.model_options.pop("max_tokens")
+
+            # For backward compatibility, remove reasoning_effort if it is None
+            if "reasoning_effort" in self.model_options and self.model_options["reasoning_effort"] is None:
+                self.model_options.pop("reasoning_effort", None)
+        else:
+            # For non-reasoning models and no OpenAI Service, remove reasoning_effort if it exists
+            self.model_options.pop("reasoning_effort", None)
 
     def get_client(self):
         if self.service == "openai":
@@ -246,6 +258,11 @@ class Component(ComponentBase):
             raise UserException(f"Some specified primary keys are not in the input table: {missing_keys}")
 
         return input_table, out_table
+
+    @staticmethod
+    def is_openai_reasoning_model(model_name: str) -> bool:
+        prefixes = ("gpt-5", "o1", "o3", "o4")
+        return any([model_name.startswith(x) for x in prefixes])
 
     @staticmethod
     def _build_output_row(input_row: dict, result: str):
@@ -362,7 +379,7 @@ class Component(ComponentBase):
         )
 
     def _get_storage_source(self) -> str:
-        storage_config = self.configuration.config_data.get("storage")
+        storage_config = self.configuration.config_data.get("storage", {})
         if not storage_config.get("input", {}).get("tables"):
             raise UserException("Input table must be specified.")
         source = storage_config["input"]["tables"][0]["source"]
@@ -439,22 +456,30 @@ class Component(ComponentBase):
         results = asyncio.run(self._test_prompt(client, rows))
 
         output = []
+        empty_results = 0
         if len(results) > 0:
             for res in results:
-                o = res.get(RESULT_COLUMN_NAME, "")
-                output.append(o)
+                if res is None:
+                    empty_results += 1
+                else:
+                    o = res.get(RESULT_COLUMN_NAME, "")
+                    output.append(o)
 
         if output:
+            messageType = MessageType.SUCCESS
             estimated_token_usage = self.estimate_token_usage(preview_size, table_size)
 
             markdown = self.create_markdown_table(output)
-            tokens_used_info = f"\nTokens used during test prompting: {self.tokens_used}"
-            token_estimation_info = f"\nEstimated token usage for the whole input table: {estimated_token_usage}"
-            markdown += tokens_used_info
-            markdown += token_estimation_info
-            return ValidationResult(markdown, MessageType.SUCCESS)
+            markdown += f"\nTokens used during test prompting: {self.tokens_used}"
+            markdown += f"\nEstimated token usage for the whole input table: {estimated_token_usage}"
+            if empty_results > 0:
+                markdown += f"\nEmpty results: {empty_results}. Try to increase the max tokens parameter."
+                messageType = MessageType.WARNING
+            return ValidationResult(markdown, messageType)
         else:
-            return ValidationResult("Query returned no data.", MessageType.WARNING)
+            return ValidationResult(
+                "Query returned no data. Try to increase the max tokens parameter.", MessageType.WARNING
+            )
 
     async def _test_prompt(self, client, rows):
         tasks = []

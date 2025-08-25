@@ -42,47 +42,63 @@
         "presence_penalty"
       ],
       "properties": {
+        "reasoning_effort": {
+          "type": "string",
+          "title": "Reasoning Effort",
+          "default": "medium",
+          "description": "The effort level for reasoning models (lower levels decrease token spend). This is only supported for reasoning models in the OpenAI Service. <a href=\"https://platform.openai.com/docs/guides/reasoning\">Learn more</a>",
+          "propertyOrder": 1,
+          "enum": ["minimal", "low", "medium", "high"],
+          "options": {
+            "enum_titles": [
+              "Minimal",
+              "Low",
+              "Medium",
+              "High"
+            ]
+          }
+        },
         "max_tokens": {
           "type": "number",
           "title": "Max Tokens",
-          "default": 100,
-          "description": "The maximum number of tokens to generate in the completion.\n\nThe token count of your prompt plus max_tokens cannot exceed the model's context length. Most models have a context length of 2048 tokens (except for the newest models, which support 4096).",
-          "propertyOrder": 1
+          "default": 1000,
+          "description": "The maximum number of tokens to generate in the completion.\n\nThe token count of your prompt plus max_tokens cannot exceed the model's context length. If you get empty response, try to increase the value yet.",
+          "propertyOrder": 2
         },
         "temperature": {
           "type": "number",
           "title": "Temperature",
           "default": 0.6,
           "description": "What sampling temperature to use [0-1]. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer.",
-          "propertyOrder": 2
+          "propertyOrder": 3
         },
         "top_p": {
           "type": "number",
           "title": "Top P",
           "default": 1,
           "description": "An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.",
-          "propertyOrder": 10
+          "propertyOrder": 4
         },
         "frequency_penalty": {
           "type": "number",
           "title": "Frequency Penalty",
           "default": 0,
           "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.",
-          "propertyOrder": 20
+          "propertyOrder": 5
         },
         "presence_penalty": {
           "type": "number",
           "title": "Presence Penalty",
           "default": 0,
           "description": "Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.",
-          "propertyOrder": 30
+          "propertyOrder": 6
         },
         "timeout": {
           "type": "number",
           "title": "Request Timeout",
           "default": 30,
           "description": "Seconds to wait for API to respond. This is a workaround for OpenAI API not responding sometimes.",
-          "propertyOrder": 40
+          "propertyOrder": 7
         }
       }
     },

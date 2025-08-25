@@ -1,6 +1,6 @@
 # Generative AI
 
-This component enables you to query OpenAI, Azure OpenAI, and Llama 2 (coming soon) with data provided from your KBC project.
+This component enables you to query OpenAI, Azure OpenAI, Google and Anthropic models.
 
 - [TOC]
 
@@ -53,10 +53,10 @@ For information on retrieving your API key, API Base, and Deployment ID, refer t
 - **Predefined Model (`predefined_model`):** The model that will generate the completion. [Learn more](https://beta.openai.com/docs/models).
 
 **Additional Options:**
-
-- **Max Tokens (`max_tokens`):** Maximum number of tokens for the completion. The token count of your prompt plus `max_tokens` should not exceed the model's context length. Most models support up to 2048 tokens, with the newest ones supporting 4096.
-> NOTE: When using OpenAI models. The `max_tokens` is changed to `max_completion_tokens` on the backend.
-- **Temperature (`temperature`):** Sampling temperature between [0-1]. Higher values result in riskier outputs. Use 0.9 for creativity, and 0 for well-defined answers.
+- **Reasoning effort (`reasoning_effort`):** Controls how much reasoning the OpenAI **reasoning models** will perform. This parameter only applies to reasoning models (like o1 or gpt-5). Default value is `medium`. When set to `minimal`, the model will skip the reasoning process entirely.
+- **Max Tokens (`max_tokens`):** Maximum number of tokens for the completion. The token count of your prompt plus `max_tokens` should not exceed the model's context length.
+> NOTE: When using OpenAI reasoning models. The `max_tokens` is changed to `max_completion_tokens` on the backend.
+- **Temperature (`temperature`):** Sampling temperature between [0-1]. Higher values result in riskier outputs. Use 0.9 for creativity, and 0 for well-defined answers. For `gpt-5`-like models, temperature must be set to 1.
 - **Top P (`top_p`):** Nucleus sampling, where only tokens with top_p probability mass are considered. For instance, 0.1 means only the top 10% probability mass tokens are evaluated.
 - **Frequency Penalty (`frequency_penalty`):** A number between -2.0 and 2.0. Positive values penalize frequently occurring tokens in the current text, reducing repetition.
 - **Presence Penalty (`presence_penalty`):** A number between -2.0 and 2.0. Positive values penalize tokens already present in the text, encouraging diverse topics.

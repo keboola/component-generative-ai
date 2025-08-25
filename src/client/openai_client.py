@@ -78,7 +78,6 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
 
         content = response.choices[0].message.content
         token_usage = response.usage.total_tokens
-
         return content, token_usage
 
     async def list_models(self) -> list:

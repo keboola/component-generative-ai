@@ -61,6 +61,7 @@ class AdditionalOptions(ConfigurationBase):
     presence_penalty: float
     frequency_penalty: float
     timeout: int = 60
+    reasoning_effort: str | None = None
 
 
 @dataclass
