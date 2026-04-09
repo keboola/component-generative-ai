@@ -1,4 +1,4 @@
-from typing import Protocol, Tuple, Optional
+from typing import Protocol
 
 
 class AIClientException(Exception):
@@ -10,7 +10,7 @@ class CommonClient(Protocol):
     Declares default AIClient behaviour
     """
 
-    async def infer(self, model_name: str, prompt: str, **model_options) -> Tuple[Optional[str], Optional[int]]:
+    async def infer(self, model_name: str, prompt: str, **model_options) -> tuple[str | None, int | None]:
         pass
 
     async def list_models(self) -> list:

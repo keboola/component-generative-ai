@@ -1,8 +1,9 @@
 import asyncio
-from anthropic import AsyncAnthropic, AnthropicError
-from typing import Optional, Tuple, Callable
+from collections.abc import Callable
 
-from .base import CommonClient, AIClientException
+from anthropic import AnthropicError, AsyncAnthropic
+
+from .base import AIClientException, CommonClient
 
 
 def on_giveup(details: dict):
@@ -20,7 +21,7 @@ class AnthropicClient(CommonClient):
         self.inference_function: Callable = None
         self.semaphore = asyncio.Semaphore(5)
 
-    async def infer(self, model_name: str, prompt: str, **model_options) -> Tuple[Optional[str], Optional[int]]:
+    async def infer(self, model_name: str, prompt: str, **model_options) -> tuple[str | None, int | None]:
         if not self.inference_function:
             self.inference_function = await self.get_inference_function(model_name)
 
@@ -36,7 +37,7 @@ class AnthropicClient(CommonClient):
 
     async def get_chat_completion_result(
         self, model_name: str, prompt: str, **model_options
-    ) -> Tuple[Optional[str], Optional[int]]:
+    ) -> tuple[str | None, int | None]:
         max_tokens = model_options.get("max_tokens", 1024)
         messages = [{"role": "user", "content": prompt}]
 

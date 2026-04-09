@@ -12,7 +12,6 @@ import os
 import sys
 from io import StringIO
 from itertools import islice
-from typing import List
 
 import pystache as pystache
 import requests.exceptions
@@ -21,13 +20,13 @@ from kbcstorage.tables import Tables
 from keboola.component.base import ComponentBase, sync_action
 from keboola.component.dao import TableDefinition
 from keboola.component.exceptions import UserException
-from keboola.component.sync_actions import ValidationResult, MessageType
+from keboola.component.sync_actions import MessageType, ValidationResult
 
 from client.anthropic_client import AnthropicClient
 from client.base import AIClientException
 from client.googleai_client import GoogleAIClient
 from client.huggingface_client import HuggingfaceClient
-from client.openai_client import OpenAIClient, AzureOpenAIClient
+from client.openai_client import AzureOpenAIClient, OpenAIClient
 from configuration import Configuration
 
 # configuration variables
@@ -179,7 +178,7 @@ class Component(ComponentBase):
             raise UserException(f"{self.service} service is not implemented yet.")
 
     async def process_prompts(self, client, input_table, out_table) -> None:
-        with open(input_table.full_path, "r") as input_file:
+        with open(input_table.full_path) as input_file:
             reader = csv.DictReader(input_file)
 
             with open(out_table.full_path, "w+") as out_file:
@@ -297,7 +296,7 @@ class Component(ComponentBase):
         unique_keys = list(dict.fromkeys(keys))
         return unique_keys
 
-    def _build_prompt(self, input_keys: List[str], row: dict):
+    def _build_prompt(self, input_keys: list[str], row: dict):
         prompt = self._configuration.prompt_options.prompt
         for input_key in input_keys:
             prompt = prompt.replace("[[" + input_key + "]]", row[input_key])
@@ -318,7 +317,7 @@ class Component(ComponentBase):
             for filename in manifests:
                 path = os.path.join(self.tables_out_path, filename)
 
-                with open(path, "r") as f:
+                with open(path) as f:
                     data = json.load(f)
                     data["write_always"] = True
 
@@ -406,7 +405,7 @@ class Component(ComponentBase):
 
     @staticmethod
     def count_rows(file_path):
-        with open(file_path, "r", encoding="utf-8") as file:
+        with open(file_path, encoding="utf-8") as file:
             reader = csv.reader(file)
             row_count = sum(1 for _ in reader) - 1
         return row_count
@@ -494,7 +493,7 @@ class Component(ComponentBase):
         configuration: Configuration = Configuration.load_from_dict(self.configuration.parameters)
         template = configuration.prompt_templates.prompt_template
 
-        with open("src/templates/prompts.json", "r") as json_file:
+        with open("src/templates/prompts.json") as json_file:
             templates = json.load(json_file)
 
         prompt = templates.get(template)
