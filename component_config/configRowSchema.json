@@ -103,6 +103,7 @@
       }
     },
     "prompt_templates": {
+      "type": "object",
       "title": "Prompt Templates",
       "propertyOrder": 15,
       "properties": {
@@ -137,11 +138,8 @@
           "format": "sync-action",
           "propertyOrder": 2,
           "options": {
-            "dependencies": {
-              "model_type": "predefined"
-            },
             "async": {
-              "label": "LOAD PROMPT TEMPLATE",
+              "label": "Load prompt template",
               "action": "getPromptTemplate"
             }
           }
@@ -170,7 +168,7 @@
           "propertyOrder": 30,
           "options": {
             "async": {
-              "label": "TEST PROMPT",
+              "label": "Test prompt",
               "action": "testPrompt"
             }
           }
