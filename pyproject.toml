@@ -18,9 +18,6 @@ dependencies = [
     "pystache>=0.6.8",
 ]
 
-[tool.uv.sources]
-keboola-http-client = { git = "https://github.com/keboola/python-http-client.git", rev = "feature/async" }
-
 [dependency-groups]
 dev = [
     "freezegun>=1.5.5",
