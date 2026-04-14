@@ -1,10 +1,10 @@
+
 import backoff
-from typing import Optional, Tuple
 import google.api_core.exceptions
 import google.generativeai as genai
 from google.generativeai.types import AsyncGenerateContentResponse
 
-from .base import CommonClient, AIClientException
+from .base import AIClientException, CommonClient
 
 
 class GoogleAIClient(CommonClient):
@@ -13,7 +13,7 @@ class GoogleAIClient(CommonClient):
         self.model = None
 
     @backoff.on_exception(backoff.expo, google.api_core.exceptions.ResourceExhausted, max_time=60)
-    async def infer(self, model_name: str, prompt: str, **model_options) -> Tuple[Optional[str], Optional[int]]:
+    async def infer(self, model_name: str, prompt: str, **model_options) -> tuple[str | None, int | None]:
         if not self.model:
             self.model = genai.GenerativeModel(model_name=model_name)
 

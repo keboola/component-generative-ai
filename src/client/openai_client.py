@@ -1,9 +1,10 @@
 import logging
-import openai
-from openai import AsyncOpenAI, AsyncAzureOpenAI
-from typing import Optional, Callable
+from collections.abc import Callable
 
-from .base import CommonClient, AIClientException
+import openai
+from openai import AsyncAzureOpenAI, AsyncOpenAI
+
+from .base import AIClientException, CommonClient
 
 
 def on_giveup(details: dict):
@@ -20,7 +21,7 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
         self.inference_function: callable = None
         super().__init__(api_key=api_key)
 
-    async def infer(self, model_name: str, prompt: str, **model_options) -> tuple[Optional[str], Optional[int]]:
+    async def infer(self, model_name: str, prompt: str, **model_options) -> tuple[str | None, int | None]:
         if not self.inference_function:
             self.inference_function = await self.get_inference_function(model_name)
 
@@ -53,7 +54,7 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
         except openai.OpenAIError:
             raise AIClientException(f"The component is unable to use model {model_name}. Please check your API key.")
 
-    async def get_completion_result(self, model_name: str, prompt: str, **model_options) -> tuple[str, Optional[int]]:
+    async def get_completion_result(self, model_name: str, prompt: str, **model_options) -> tuple[str, int | None]:
         try:
             response = await self.completions.create(model=model_name, prompt=prompt, **model_options)
         except openai.OpenAIError as e:
@@ -66,7 +67,7 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
 
     async def get_chat_completion_result(
         self, model_name: str, prompt: str, **model_options
-    ) -> tuple[Optional[str], Optional[int]]:
+    ) -> tuple[str | None, int | None]:
         try:
             response = await self.chat.completions.create(
                 model=model_name,
@@ -94,7 +95,7 @@ class AzureOpenAIClient(AsyncAzureOpenAI, CommonClient):
             azure_deployment=deployment_id,
         )
 
-    async def infer(self, model_name: str, prompt: str, **model_options) -> tuple[str, Optional[int]]:
+    async def infer(self, model_name: str, prompt: str, **model_options) -> tuple[str, int | None]:
         try:
             response = await self.chat.completions.create(
                 model=model_name,
