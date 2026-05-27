@@ -1,10 +1,10 @@
-import backoff
 import logging
-from typing import Optional, Tuple
-from .base import CommonClient, AIClientException
-from httpx import HTTPStatusError
 
+import backoff
+from httpx import HTTPStatusError
 from keboola.http_client import AsyncHttpClient
+
+from .base import AIClientException, CommonClient
 
 SUPPORTED_MODELS = {
     "Serverless/Meta-Llama-3-8B-Instruct": "https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct",  # noqa
@@ -27,7 +27,7 @@ class HuggingfaceClient(CommonClient):
             "Content-Type": "application/json",
         }
 
-    async def infer(self, model_name: str, prompt: str, **model_options) -> Tuple[Optional[str], Optional[int]]:
+    async def infer(self, model_name: str, prompt: str, **model_options) -> tuple[str | None, int | None]:
         if model_name not in SUPPORTED_MODELS and model_name != "custom_model":
             raise AIClientException(
                 f"Model {model_name} is not supported. Supported models: {list(SUPPORTED_MODELS.keys())}"
