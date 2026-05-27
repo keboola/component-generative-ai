@@ -19,7 +19,7 @@ class OpenAIClient(AsyncOpenAI, CommonClient):
 
     def __init__(self, api_key: str):
         self.inference_function: callable = None
-        super().__init__(api_key=api_key)
+        super().__init__(api_key=api_key, max_retries=5)
 
     async def infer(self, model_name: str, prompt: str, **model_options) -> tuple[str | None, int | None]:
         if not self.inference_function:
@@ -93,6 +93,7 @@ class AzureOpenAIClient(AsyncAzureOpenAI, CommonClient):
             api_version=api_version,
             azure_endpoint=api_base,
             azure_deployment=deployment_id,
+            max_retries=5,
         )
 
     async def infer(self, model_name: str, prompt: str, **model_options) -> tuple[str, int | None]:

@@ -1,4 +1,3 @@
-
 import backoff
 import google.api_core.exceptions
 import google.generativeai as genai
